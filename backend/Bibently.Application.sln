@@ -1,6 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bibently.Application", "Bibently.Application\Bibently.Application.csproj", "{DC184402-B4EF-4187-B626-04673EB6014F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4AFC0BE5-F796-4BC5-86F7-CE58936B3A72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bibently.Api", "src\Bibently.Api\Bibently.Api.csproj", "{DC184402-B4EF-4187-B626-04673EB6014F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D23BE8A9-73F9-4AB3-9562-EF5AB5DC7E67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bibently.Api.Test", "test\Bibently.Api.Test\Bibently.Api.Test.csproj", "{BB844B86-F7C9-4495-BC62-5199AB5C9137}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +18,13 @@ Global
 		{DC184402-B4EF-4187-B626-04673EB6014F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC184402-B4EF-4187-B626-04673EB6014F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC184402-B4EF-4187-B626-04673EB6014F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB844B86-F7C9-4495-BC62-5199AB5C9137}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB844B86-F7C9-4495-BC62-5199AB5C9137}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB844B86-F7C9-4495-BC62-5199AB5C9137}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB844B86-F7C9-4495-BC62-5199AB5C9137}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DC184402-B4EF-4187-B626-04673EB6014F} = {4AFC0BE5-F796-4BC5-86F7-CE58936B3A72}
+		{BB844B86-F7C9-4495-BC62-5199AB5C9137} = {D23BE8A9-73F9-4AB3-9562-EF5AB5DC7E67}
 	EndGlobalSection
 EndGlobal

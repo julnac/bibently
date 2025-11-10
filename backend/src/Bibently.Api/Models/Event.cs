@@ -1,4 +1,4 @@
-namespace Bibently.App.Api.Models;
+namespace Bibently.Application.Models;
 
 public class Event
 {

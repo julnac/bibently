@@ -1,3 +1,6 @@
 .idea/
-backend/Bibently.Application/bin/
-backend/Bibently.Application/obj/
+backend/src/Bibently.Api/bin/
+backend/src/Bibently.Api/obj/
+
+backend/test/Bibently.Api.Test/bin/
+backend/test/Bibently.Api.Test/obj/

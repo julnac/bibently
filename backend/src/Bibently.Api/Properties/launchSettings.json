@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "Bibently.Application": {
+    "Bibently.Api": {
       "commandName": "Project",
-      "openBrowser": true,
-      "launchUrl": "swagger/index.html",
-      "applicationUrl": "https://localhost:5001;",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5001/",
+      "applicationUrl": "http://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
