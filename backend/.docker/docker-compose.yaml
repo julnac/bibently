@@ -1,0 +1,17 @@
+services:
+  mongo:
+    container_name: mongo
+    image: mongo
+    command: --bind_ip_all
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment: # todo: move somewhere else
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongo_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+
+volumes:
+  mongo_data:

@@ -1,13 +1,20 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Bibently.Application.Installers;
+using Bibently.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddScoped<IEventsService, EventsService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper();
+builder.Services.AddMongo(builder.Configuration);
 
 var app = builder.Build();
+
+var a = app.Configuration;
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

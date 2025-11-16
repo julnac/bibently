@@ -1,32 +1,75 @@
-using Bibently.Application.Models;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Bibently.Application.Controllers;
+
+using AutoMapper;
+using Bibently.Abstractions;
+using Bibently.Application.Models;
+using Bibently.Application.Services;
+using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("events")]
-public class EventsController: ControllerBase
+public class EventsController(
+    IEventsService eventsService,
+    ILogger<EventsController> logger,
+    IMapper mapper) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetEvents()
+    public async Task<IActionResult> GetEvents(CancellationToken token)
     {
-        var mockedEvents = new Event[]
+        try
         {
-            new Event
-            {
-                Title = "Sample Event 1",
-                Date = DateTime.UtcNow.AddDays(10),
-                Location = "New York",
-                Description = "This is a sample event description."
-            },
-            new Event
-            {
-                Title = "Sample Event 2",
-                Date = DateTime.UtcNow.AddDays(20),
-                Location = "Los Angeles",
-                Description = "This is another sample event description."
-            }
-        };
-        return Ok(mockedEvents);
+            var events = await eventsService.GetEvents(token);
+            return Ok(mapper.Map<List<EventDto>>(events));
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to get events");
+            throw;
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest createEventRequest, CancellationToken token)
+    {
+        try
+        {
+            var eventEntity = await eventsService.AddEvent(mapper.Map<Event>(createEventRequest), token);
+            return Ok(mapper.Map<EventDto>(eventEntity));
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to create event");
+            return Problem();
+        }
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetEventById([FromRoute] Guid id, CancellationToken token)
+    {
+        try
+        {
+            var eventEntity = await eventsService.GetEventById(id, token);
+            return Ok(mapper.Map<EventDto>(eventEntity));
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to get event by id");
+            return Problem();
+        }
+    }
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteEventById([FromRoute] Guid id, CancellationToken token)
+    {
+        try
+        {
+            await eventsService.DeleteEventById(id, token);
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to delete event by id");
+            return Problem();
+        }
     }
 }

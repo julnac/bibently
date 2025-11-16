@@ -1,6 +1,6 @@
-namespace Bibently.Application.Models;
+namespace Bibently.Abstractions;
 
-public class Event
+public class EventDto
 {
     public Guid Id { get; set; }
     public required string Title { get; set; }
