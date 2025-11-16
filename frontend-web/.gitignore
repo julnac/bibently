@@ -1,0 +1,14 @@
+.idea/
+backend/src/Bibently.Api/bin/
+backend/src/Bibently.Api/obj/
+
+backend/test/Bibently.Api.Test/bin/
+backend/test/Bibently.Api.Test/obj/
+
+node_modules/
+dist/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
