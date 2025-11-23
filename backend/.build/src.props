@@ -1,0 +1,32 @@
+<Project>
+
+    <Import Project="$(MSBuildThisFileDirectory)dependencies.props" />
+
+    <PropertyGroup>
+        <DebugType>portable</DebugType>
+<!--        <GenerateDocumentationFile>true</GenerateDocumentationFile>-->
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+        <Copyright>© bibently. All rights reserved.</Copyright>
+
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://dev.azure.com/bibentlydev/Bibently/_git/bibently.application</RepositoryUrl>
+
+        <LangVersion>$(LangVersion)</LangVersion>
+        <Nullable>$(NullableReferences)</Nullable>
+        <ImplicitUsings>$(ImplicitUsings)</ImplicitUsings>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <TreatWarningsAsErrors>$(TreatWarningsAsErrorsValue)</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="$(JetBrainsVersion)" PrivateAssets="all"/>
+        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="$(LindhartAnalyserMissingAwaitWarningVersion)" PrivateAssets="all"/>
+        <PackageReference Include="SerilogAnalyzer" Version="$(SerilogAnalyzerVersion)" PrivateAssets="all"/>
+    </ItemGroup>
+
+</Project>

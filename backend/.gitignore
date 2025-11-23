@@ -72,3 +72,6 @@ bower_components/
 
 # include build folder
 !.build/*
+
+# idea
+.idea/

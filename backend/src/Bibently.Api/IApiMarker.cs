@@ -1,4 +1,4 @@
-namespace Bibently.Application;
+namespace Bibently.Api;
 
 public interface IApiMarker
 {

@@ -1,0 +1,50 @@
+<Project>
+    <PropertyGroup>
+        <MSTestSDKVersion>18.0.0</MSTestSDKVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NetVersion>net9.0</NetVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <SwaggerVersion>9.0.6</SwaggerVersion>
+        <AutoMapperVersion>15.1.0</AutoMapperVersion>
+        <SerilogVersion>4.0.1</SerilogVersion>
+        <MongoDbDriverVersion>3.5.0</MongoDbDriverVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <MoqVersion>4.20.72</MoqVersion>
+        <XunitVersion>3.1.0</XunitVersion>
+        <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
+        <AutoFixtureVersion>5.0.0-preview0012</AutoFixtureVersion>
+        <JetBrainsVersion>2025.2.2</JetBrainsVersion>
+        <MicrosoftAspNetCoreMvcTestingVersion>9.0.10</MicrosoftAspNetCoreMvcTestingVersion>
+        <TestContainersVersion>4.8.1</TestContainersVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- do not upgrade Automapper to version 15 or higher due to license changes  -->
+        <AutomapperVersion>[14.0.0]</AutomapperVersion>
+        <!-- do not upgrade FluentAssertions to version 8 or higher due to license changes  -->
+        <FluentAssertionsVersion>[7.2.0]</FluentAssertionsVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <SerilogAnalyzerVersion>0.15.0</SerilogAnalyzerVersion>
+        <LindhartAnalyserMissingAwaitWarningVersion>3.1.0-beta</LindhartAnalyserMissingAwaitWarningVersion>
+        <CoverletVersion>6.0.4</CoverletVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NullableReferences>enable</NullableReferences>
+        <TreatWarningsAsErrorsValue>false</TreatWarningsAsErrorsValue>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>13</LangVersion>
+    </PropertyGroup>
+</Project>

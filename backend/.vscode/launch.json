@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // up task needs to be ran first ⇧⌘P or ctrl+shift+P
+      "name": "Bibently API",
+      "type": "docker",
+      "preLaunchTask": "up",
+      "postDebugTask": "down",
+      "request": "attach",
+      "platform": "netCore",
+      "processName": "Bibently.Api",
+      "containerName": "bibently.api",
+      "sourceFileMap": {
+          "/src": "${workspaceFolder}/src/Bibently.Api"
+      }
+    }
+  ]
+}

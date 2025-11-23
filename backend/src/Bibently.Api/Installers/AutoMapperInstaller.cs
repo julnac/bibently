@@ -21,5 +21,5 @@ public static class AutoMapperInstaller
             config.CreateMap<Event, EventDto>().ReverseMap();
             config.CreateMap<CreateEventRequest, Event>();
             config.CreateMap<Event, EventDocument>().ReverseMap();
-        }, new LoggerFactory());
+        });
 }

@@ -1,22 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <RuntimeIdentifiers>$(RuntimeIdentifiers)</RuntimeIdentifiers>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
-        <PackageReference Include="xunit.v3" Version="2.0.3"/>
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"/>
-        <PackageReference Include="AutoFixture" Version="4.18.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Bibently.Tests.Shared\Bibently.Tests.Shared.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Bibently.Tests.Shared/Bibently.Tests.Shared.csproj" />
+  </ItemGroup>
 
 </Project>
