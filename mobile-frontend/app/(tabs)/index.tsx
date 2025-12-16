@@ -1,54 +1,122 @@
-import { View, ScrollView} from "react-native";
-import '../global.css';
+import ChooseCityModal from "@/components/home/ChooseCityModal";
+import EventTypesSection from "@/components/home/EventTypesSection";
+import PopularSection from "@/components/home/PopularSection";
+import { useSearch } from "@/contexts/SearchContext";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import SearchBar from "../../components/search/SearchBar";
-import ContinueExploring from "@/components/search/ContinueExploring";
-import CommunityTrends from "@/components/search/CommunityTrends";
-import SeeAllEventsButton from "@/components/search/SeeAllEventsButton";
-import { useState } from "react";
-import UseMyCurrentLocationButton from "@/components/search/UseMyCurrentLocationButton";
-import SuggestionList from "@/components/search/SuggestionList";
+import { useUser } from "../../contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import '../global.css';
+
+const availableCities = [
+  'Gdańsk, Poland',
+  'Warsaw, Poland',
+  'Kraków, Poland',
+  'Wrocław, Poland',
+  'Poznań, Poland',
+  'Paris, France',
+  'Berlin, Germany',
+  'London, UK',
+  'Amsterdam, Netherlands',
+];
 
 export default function Index() {
-  const [searchView, setSearchView] = useState<'default' | 'location' | 'general'>('default');
+  const router = useRouter();
+  const { userSettings, updateUserSettings } = useUser();
+  const { setLocation } = useSearch();
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === "dark";
+  const [cityModalVisible, setCityModalVisible] = useState(false);
+
+  function handleSearchPress() {
+    router.push('/map/SearchScreen');
+  }
+
+  function handleMapRedirect() {
+    router.push('/map/MapScreen');
+  }
+
+  function openCityModal() {
+    setCityModalVisible(true);
+  }
+
+  function handleCitySelect(city: string) {
+    updateUserSettings({ defaultCity: city });
+    setLocation(city)
+  }
 
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView className="flex-1 bg-white px-4 pt-8">
-        <SearchBar 
-          placeholder="Location" 
-          onPress={() => setSearchView('location')} 
-          iconName="location-outline"/>
-        <SearchBar 
-          placeholder="Search" 
-          onPress={() => setSearchView('general')} 
-          iconName="search-outline"/>
+    <View className={`flex-1 ${isDark ? "bg-background-dark" : "bg-white"}`}>
+      <StatusBar style={isDark ? "light" : "dark"} />
 
-        {/* Default view */}
-        {searchView === 'default' && (
-          <>
-            <SeeAllEventsButton />
-            <ContinueExploring />
-            <CommunityTrends />
-            <View className="mb-24" />
-          </>
-        )}
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+      >
 
-        {searchView === 'location' && (
-          <>
-            <UseMyCurrentLocationButton />
-            <SuggestionList />
-            <View className="mb-24" />
-          </>
-        )}
+        {/* Location */}
+        <Pressable
+          className="px-4 pt-12 pb-3 flex-row gap-4"
+          onPress={openCityModal}
+        >
+          <Text className={`mt-1 ${isDark ? "text-neutral-300" : "text-gray-700"}`}>
+            {userSettings.defaultCity ? userSettings.defaultCity : "Choose city"}
+          </Text>
+          <Ionicons
+            name="chevron-down"
+            size={20}
+            color={isDark ? "#D9DEE6" : "gray"}
+          />
+        </Pressable>
 
-        {searchView === 'general' && (
-          <>
-            <SuggestionList />
-            <View className="mb-24" />
-          </>
-        )}
+        {/* Search Bar */}
+        <View className="pt-3 px-4 mb-4">
+          <SearchBar
+            placeholder="Search for events, places..."
+            onPress={handleSearchPress}
+            iconName="search"
+            editable={false}
+          />
+        </View>
 
+        <Pressable
+          onPress={handleMapRedirect}
+          className={`mx-4 flex-row items-center justify-between gap-2 rounded-xl px-5 py-3 shadow-lg ${
+            isDark ? "bg-neutral-600 active:bg-neutral-500" : "bg-neutral-700 active:bg-zinc-900"
+          }`}
+        >
+          <View className="flex-row gap-4 items-center">
+            <Ionicons name="map-outline" size={18} color="#D9DEE6" />
+            <Text className="text-base font-semibold text-neutral-200">
+              Explore nearby events
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="#D9DEE6" />
+        </Pressable>
+
+        {/* Event Types */}
+        <View className="px-4">
+          <EventTypesSection />
+        </View>
+
+        {/* Popular on Bibently */}
+        <View className="px-4">
+          <PopularSection />
+        </View>
       </ScrollView>
+
+      {/* Choose City Modal */}
+      <ChooseCityModal
+        isVisible={cityModalVisible}
+        cities={availableCities}
+        selectedCity={userSettings.defaultCity || ''}
+        onSelectCity={handleCitySelect}
+        onClose={() => setCityModalVisible(false)}
+      />
     </View>
   );
 }

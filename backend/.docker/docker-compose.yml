@@ -1,5 +1,5 @@
 services:
-  
+
   bibently.application:
     container_name: bibently.application
     image: bibently.application:latest
@@ -10,6 +10,7 @@ services:
       - bibently.application-services
     ports:
       - "127.0.0.1:5001:5001"
+      - "0.0.0.0:5001:5001"
     environment:
       - ASPNETCORE_URLS=http://+:5001
       - SERILOG__MINIMUMLEVEL__DEFAULT=Warning
@@ -21,7 +22,7 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
-  
+
   bibently.store:
     container_name: bibently.store
     image: mongo:8.2.1
@@ -46,6 +47,6 @@ services:
 
 volumes:
   mongo_data:
-    
+
 networks:
   bibently.application-services:

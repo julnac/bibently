@@ -1,28 +1,53 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./App.tsx", 
-    "./components/**/*.{js,jsx,ts,tsx}", 
+    "./App.tsx",
+    "./components/**/*.{js,jsx,ts,tsx}",
     "./app/*.{js,jsx,ts,tsx}",
     "./app/**/*.{js,jsx,ts,tsx}",
   ],
+  darkMode: "class",
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: {
-        primary: "#06051F",
-        primaryLight: "#53516B", 
-        primaryUltraLight: "#D4DADA",
+        // Light mode colors
+        primary: {
+          DEFAULT: "#06051F",
+          dark: "#ECEFEF",
+        },
+        primaryLight: {
+          DEFAULT: "#53516B",
+          dark: "#A8A6B8",
+        },
+        primaryUltraLight: {
+          DEFAULT: "#D4DADA",
+          dark: "#2A2E3A",
+        },
 
-        accent: "#3C46FF",
-        accentLight: "#6E75FF", 
-        accentDark: "#272FCC",
+        accent: {
+          DEFAULT: "#3C46FF",
+          dark: "#6E75FF",
+        },
+        accentLight: {
+          DEFAULT: "#6E75FF",
+          dark: "#8C93FF",
+        },
+        accentDark: {
+          DEFAULT: "#272FCC",
+          dark: "#1F25A3",
+        },
 
-        // Białe
-        surface: "#ECEFEF",
-        background: "#D4DADA",
+        surface: {
+          DEFAULT: "#ECEFEF",
+          dark: "#1C1F27",
+        },
+        background: {
+          DEFAULT: "#FFFFFF",
+          dark: "#12141A",
+        },
 
-        // Neutralne szarości 
+        // Neutralne szarości
         neutral: {
           50:  "#F7F8FA",
           100: "#ECEFF3",
