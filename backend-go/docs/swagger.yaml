@@ -1,0 +1,586 @@
+basePath: /
+definitions:
+  domain.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+    type: object
+  domain.Address:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      name:
+        type: string
+      postal_code:
+        type: string
+      raw_address_string:
+        type: string
+      street:
+        type: string
+      type:
+        type: string
+    type: object
+  domain.AddressDTO:
+    properties:
+      city:
+        description: City is usually required
+        type: string
+      country:
+        type: string
+      name:
+        type: string
+      postal_code:
+        type: string
+      raw_address_string:
+        type: string
+      street:
+        type: string
+      type:
+        type: string
+    required:
+    - city
+    type: object
+  domain.BatchEventRequest:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/domain.EventDTO'
+        maxItems: 5000
+        minItems: 1
+        type: array
+    required:
+    - events
+    type: object
+  domain.Event:
+    properties:
+      article_body:
+        type: string
+      attendance_mode:
+        type: string
+      created_at:
+        type: string
+      date_published:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      event_status:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      location:
+        $ref: '#/definitions/domain.Location'
+      name:
+        type: string
+      offer:
+        $ref: '#/definitions/domain.Offer'
+      organizer:
+        $ref: '#/definitions/domain.Organization'
+      performer:
+        $ref: '#/definitions/domain.Organization'
+      provider:
+        type: string
+      start_date:
+        type: string
+      type:
+        description: '"Event"'
+        type: string
+      url:
+        type: string
+    type: object
+  domain.EventDTO:
+    properties:
+      article_body:
+        type: string
+      attendance_mode:
+        type: string
+      date_published:
+        type: string
+      description:
+        type: string
+      end_date:
+        example: "2024-07-20T22:00:00Z"
+        type: string
+      event_status:
+        type: string
+      image_url:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      location:
+        $ref: '#/definitions/domain.LocationDTO'
+      name:
+        type: string
+      offer:
+        $ref: '#/definitions/domain.OfferDTO'
+      organizer:
+        $ref: '#/definitions/domain.OrganizationDTO'
+      performer:
+        $ref: '#/definitions/domain.OrganizationDTO'
+      provider:
+        type: string
+      start_date:
+        example: "2024-07-20T22:00:00Z"
+        type: string
+      type:
+        description: '"Event"'
+        type: string
+      url:
+        type: string
+    required:
+    - location
+    - name
+    - start_date
+    - type
+    type: object
+  domain.Location:
+    properties:
+      address:
+        $ref: '#/definitions/domain.Address'
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  domain.LocationDTO:
+    properties:
+      address:
+        $ref: '#/definitions/domain.AddressDTO'
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - address
+    type: object
+  domain.Offer:
+    properties:
+      availability_type:
+        type: string
+      currency:
+        type: string
+      is_available:
+        type: boolean
+      price:
+        type: number
+      status_text:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.OfferDTO:
+    properties:
+      currency:
+        type: string
+      is_available:
+        type: boolean
+      price:
+        minimum: 0
+        type: number
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.Organization:
+    properties:
+      address:
+        $ref: '#/definitions/domain.Address'
+      name:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.OrganizationDTO:
+    properties:
+      address:
+        $ref: '#/definitions/domain.AddressDTO'
+      name:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.TrackingEvent:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      payload:
+        type: string
+      user_agent:
+        type: string
+      user_name:
+        type: string
+    type: object
+host: 127.0.0.1:3000
+info:
+  contact: {}
+paths:
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of events with optional filters
+      parameters:
+      - description: Filter by Event Name
+        in: query
+        name: name
+        type: string
+      - description: Filter by City
+        in: query
+        name: city
+        type: string
+      - description: Filter by Type
+        in: query
+        name: type
+        type: string
+      - description: Minimum Price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum Price
+        in: query
+        name: max_price
+        type: number
+      - description: Start Date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: End Date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      - description: Comma-separated Keywords
+        in: query
+        name: keywords
+        type: string
+      - description: Page Size (1-100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Pagination Token
+        in: query
+        name: page_token
+        type: string
+      - description: Sort Key (e.g. price, start_date)
+        in: query
+        name: sort_key
+        type: string
+      - description: Sort Direction (asc, desc)
+        in: query
+        name: sort_dir
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.Event'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List Events
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Create a new event item
+      parameters:
+      - description: Event Data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/domain.EventDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns Event Id
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create Event
+      tags:
+      - events
+  /events/{id}:
+    delete:
+      description: Remove an event by Id
+      parameters:
+      - description: Event Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Event
+      tags:
+      - events
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific event by Id
+      parameters:
+      - description: Event Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Event'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get Event
+      tags:
+      - events
+    put:
+      consumes:
+      - application/json
+      description: Update specific fields of an event
+      parameters:
+      - description: Event Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: event
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update Event
+      tags:
+      - events
+  /events/batch:
+    post:
+      consumes:
+      - application/json
+      description: Create multiple events in one go
+      parameters:
+      - description: Batch Data
+        in: body
+        name: batch
+        required: true
+        schema:
+          $ref: '#/definitions/domain.BatchEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch Create Events
+      tags:
+      - events
+  /tracking:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all tracking events
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.TrackingEvent'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List Tracking Events
+      tags:
+      - tracking
+    post:
+      consumes:
+      - application/json
+      description: Create a new tracking event
+      parameters:
+      - description: Tracking Event Data
+        in: body
+        name: tracking
+        required: true
+        schema:
+          $ref: '#/definitions/domain.TrackingEvent'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns Tracking Event Id
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.APIResponse'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create Tracking Event
+      tags:
+      - tracking
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

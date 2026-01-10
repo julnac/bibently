@@ -1,0 +1,9 @@
+.idea
+firestore-debug.log
+firebase-debug.log
+.env
+.env.production
+
+vendor
+
+.DS_Store
