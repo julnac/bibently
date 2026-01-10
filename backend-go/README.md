@@ -2,18 +2,6 @@
 
 This project implements a Google Cloud Function (Gen 2) in Go for managing events in Firestore.
 
-## 🚨 Fix "Missing `go.sum`" Error
-
-If you see errors like missing `go.sum` entry, it means dependency checksums haven't been generated. Run this in your terminal root:
-
-```go mod tidy```
-
-
-Or if you have `make` installed:
-
-```make tidy```
-
-
 ## Project Structure
 
 * internal/domain: Data models and DTOs.
