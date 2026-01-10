@@ -70,10 +70,8 @@ func setupApplication() {
 		adminUID = strings.TrimSpace(string(data))
 	}
 
-	databaseId := os.Getenv("FIRESTORE_DATABASE_ID")
-
 	// 1. Initialize Firestore
-	fsClient, err := firestore.NewClientWithDatabase(ctx, projectID, databaseId)
+	fsClient, err := firestore.NewClientWithDatabase(ctx, projectID, "default")
 	if err != nil {
 		transport.Logger.Error("Failed to create firestore client", "error", err)
 		panic(err)

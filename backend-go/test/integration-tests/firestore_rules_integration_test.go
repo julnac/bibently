@@ -5,12 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"testing"
 )
 
-var FirestoreDatabaseId = os.Getenv("FIRESTORE_DATABASE_ID")
+var FirestoreDatabaseId = "default"
 
 // TestFirestoreSecurityRules verifies that firestore.rules are enforced correctly.
 // It bypasses the Go Admin Client (which ignores rules) and hits the Emulator REST API directly.
@@ -90,7 +91,12 @@ func tryWriteEvent(host, project, token string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("Error closing response body: %v", err)
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("write failed with status: %d", resp.StatusCode)

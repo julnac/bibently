@@ -19,7 +19,6 @@ unit-test: tidy
 test-integration: tidy
 	FIRESTORE_EMULATOR_HOST=$(FIRESTORE_EMULATOR_HOST) \
 	FIREBASE_AUTH_EMULATOR_HOST=$(FIREBASE_AUTH_EMULATOR_HOST) \
-	FIRESTORE_DATABASE_ID=$(FIRESTORE_DATABASE_ID) \
 	GOOGLE_CLOUD_PROJECT=$(GOOGLE_CLOUD_PROJECT) \
 	FIRESTORE_ADMIN_UID=$(FIRESTORE_ADMIN_UID) \
 	go test ./test/integration-tests/... -v -count=1
@@ -31,14 +30,14 @@ generate-fake-token:
 
 # start firestore emulator
 start-emulators:
-	FIRESTORE_DATABASE_ID=$(FIRESTORE_DATABASE_ID) firebase emulators:start --only firestore,auth --project=$(GOOGLE_CLOUD_PROJECT)
+	firebase emulators:start --only firestore,auth --project=$(GOOGLE_CLOUD_PROJECT)
 
 # Helper to run the function locally with emulator
 run: tidy
-	FIREBASE_AUTH_EMULATOR_HOST=$(FIREBASE_AUTH_EMULATOR_HOST) FIRESTORE_EMULATOR_HOST=$(FIRESTORE_EMULATOR_HOST) FIRESTORE_DATABASE_ID=$(FIRESTORE_DATABASE_ID) GOOGLE_CLOUD_PROJECT=$(GOOGLE_CLOUD_PROJECT) FUNCTION_TARGET=BibentlyFunctions LOCAL_ONLY=true go run cmd/main.go
+	FIREBASE_AUTH_EMULATOR_HOST=$(FIREBASE_AUTH_EMULATOR_HOST) FIRESTORE_EMULATOR_HOST=$(FIRESTORE_EMULATOR_HOST) GOOGLE_CLOUD_PROJECT=$(GOOGLE_CLOUD_PROJECT) FUNCTION_TARGET=BibentlyFunctions LOCAL_ONLY=true go run cmd/main.go
 
 run-real: tidy
-	GOOGLE_CLOUD_PROJECT=$(GOOGLE_CLOUD_PROJECT) FUNCTION_TARGET=BibentlyFunctions LOCAL_ONLY=true FIRESTORE_DATABASE_ID="bibently-store" go run cmd/main.go
+	GOOGLE_CLOUD_PROJECT=$(GOOGLE_CLOUD_PROJECT) FUNCTION_TARGET=BibentlyFunctions LOCAL_ONLY=true go run cmd/main.go
 
 swagger:
 	swag init -g function.go --output docs

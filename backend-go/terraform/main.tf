@@ -70,7 +70,6 @@ resource "google_cloudfunctions2_function" "function" {
     environment_variables = {
       APP_ENV               = "production"
       CORS_ALLOWED_ORIGIN   = "*"
-      FIRESTORE_DATABASE_ID = "bibently-store"
       GOMEMLIMIT            = "460MiB"
       GOOGLE_CLOUD_PROJECT  = var.project_id
     }

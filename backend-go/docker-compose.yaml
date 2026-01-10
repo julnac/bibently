@@ -32,7 +32,6 @@ services:
       - LOCAL_ONLY=false
       - CORS_ALLOWED_ORIGIN=*
       - GOOGLE_CLOUD_PROJECT=local-project-id
-      - FIRESTORE_DATABASE_ID=bibently-store
       - APP_ENV=development
       - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
       - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
