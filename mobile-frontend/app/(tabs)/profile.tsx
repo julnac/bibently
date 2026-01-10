@@ -1,6 +1,6 @@
 import { Text, View, ScrollView, Image, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/core/state/theme";
 import { useState } from "react";
 
 const Profile = () => {

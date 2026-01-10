@@ -1,4 +1,4 @@
-import { useSearch } from '@/contexts/SearchContext';
+import { useSearch } from '@/features/search/context/SearchContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';

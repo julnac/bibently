@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import GoingConfirmationModal from "@/components/eventEntry/GoingConfirmationModal";
+import GoingConfirmationModal from "@/features/events/components/GoingConfirmationModal";
 
 const EventEntry = () => {
   const { id } = useLocalSearchParams();

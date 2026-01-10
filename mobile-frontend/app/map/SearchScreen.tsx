@@ -1,9 +1,9 @@
-import CommunityTrends from "@/components/search/CommunityTrends";
-import CompactEventItem from "@/components/search/CompactEventItem";
-import ContinueExploring from "@/components/search/ContinueExploring";
-import SeeAllEventsButton from "@/components/search/SeeAllEventsButton";
-import { useSearch } from "@/contexts/SearchContext";
-import { useUser } from "@/contexts/UserContext";
+import CommunityTrends from "@/features/search/components/CommunityTrends";
+import CompactEventItem from "@/features/search/components/CompactEventItem";
+import ContinueExploring from "@/features/search/components/ContinueExploring";
+import SeeAllEventsButton from "@/features/search/components/SeeAllEventsButton";
+import { useSearch } from "@/features/search/context/SearchContext";
+import { useUser } from "@/core/state/user";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";

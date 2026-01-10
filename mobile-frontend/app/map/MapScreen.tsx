@@ -1,11 +1,11 @@
-import { useSearch } from '@/contexts/SearchContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useSearch } from '@/features/search/context/SearchContext';
+import { useTheme } from '@/core/state/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { darkMapStyle, lightMapStyle } from '@/constants/mapStyles';
+import { darkMapStyle, lightMapStyle } from '@/features/map/config/map-styles';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,

@@ -1,8 +1,8 @@
 import { Text, View, ScrollView, Pressable} from "react-native";
-import LikedSection from "@/components/myEvents/LikedSection";
-import UpcomingEvents from "@/components/myEvents/UpcomingEvents";
-import Calendar from "@/components/myEvents/Calendar";
-import { useTheme } from "@/contexts/ThemeContext";
+import LikedSection from "@/features/my-events/components/LikedSection";
+import UpcomingEvents from "@/features/my-events/components/UpcomingEvents";
+import Calendar from "@/features/my-events/components/Calendar";
+import { useTheme } from "@/core/state/theme";
 
 const myEvents = () => {
   const { actualTheme } = useTheme();

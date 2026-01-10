@@ -1,28 +1,15 @@
-import ChooseCityModal from "@/components/home/ChooseCityModal";
-import EventTypesSection from "@/components/home/EventTypesSection";
-import PopularSection from "@/components/home/PopularSection";
-import { useSearch } from "@/contexts/SearchContext";
+import { ChooseCityModal, EventTypesSection, PopularSection } from "@/features/home";
+import { availableCities } from "@/features/home/constants/cities";
+import { useSearch } from "@/features/search/context/SearchContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import SearchBar from "../../components/search/SearchBar";
-import { useUser } from "../../contexts/UserContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useUser } from "@/core/state/user";
+import { useTheme } from "@/core/state/theme";
 import '../global.css';
-
-const availableCities = [
-  'Gdańsk, Poland',
-  'Warsaw, Poland',
-  'Kraków, Poland',
-  'Wrocław, Poland',
-  'Poznań, Poland',
-  'Paris, France',
-  'Berlin, Germany',
-  'London, UK',
-  'Amsterdam, Netherlands',
-];
 
 export default function Index() {
   const router = useRouter();
