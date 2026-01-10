@@ -24,6 +24,6 @@ dotnet publish \
 dotnet publish \
   --self-contained \
   --runtime linux-x64 \
-  -f net9.0 \
-  -p:PublishDir=obj/docker/publish/net9.0/linux-x64
+  -f net10.0 \
+  -p:PublishDir=obj/docker/publish/net10.0/linux-x64
 

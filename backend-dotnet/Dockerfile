@@ -26,7 +26,7 @@ COPY ./src/Bibently.Repository/*.csproj ./Bibently.Repository/
 # Explicitly pass NetVersion and RuntimeIdentifiers to guarantee they resolve,
 # bypassing potential MSBuild property import issues.
 RUN dotnet restore Bibently.Api/Bibently.Api.csproj \
-    /p:NetVersion=net9.0 \
+    /p:NetVersion=net10.0 \
     /p:RuntimeIdentifiers=linux-x64
 
 # CRITICAL STEP 3: Copy all remaining source files
@@ -39,14 +39,14 @@ RUN dotnet publish Bibently.Api/Bibently.Api.csproj \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false \
-    /p:NetVersion=net9.0 \
+    /p:NetVersion=net10.0 \
     /p:RuntimeIdentifiers=linux-x64
 
 # -------------------------------------------------------------------------
 # Stage 2: final
 # Final, smaller runtime image
 # -------------------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 # Copy the published output from the build stage
 COPY --from=build /app/publish .
