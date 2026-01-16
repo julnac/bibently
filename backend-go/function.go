@@ -71,7 +71,7 @@ func setupApplication() {
 	}
 
 	// 1. Initialize Firestore
-	fsClient, err := firestore.NewClientWithDatabase(ctx, projectID, "default")
+	fsClient, err := firestore.NewClientWithDatabase(ctx, projectID, "(default)")
 	if err != nil {
 		transport.Logger.Error("Failed to create firestore client", "error", err)
 		panic(err)

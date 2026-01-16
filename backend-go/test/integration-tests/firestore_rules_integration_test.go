@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-var FirestoreDatabaseId = "default"
+var FirestoreDatabaseId = "(default)"
 
 // TestFirestoreSecurityRules verifies that firestore.rules are enforced correctly.
 // It bypasses the Go Admin Client (which ignores rules) and hits the Emulator REST API directly.
