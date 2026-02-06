@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <PropertyGroup>
+      <TargetFramework>$(NetVersion)</TargetFramework>
+      <LangVersion>$(LangVersion)</LangVersion>
+
+      <PublishReadyToRun>true</PublishReadyToRun>
+      <PublishTrimmed>true</PublishTrimmed>
+      <TrimMode>full</TrimMode>
+      <InvariantGlobalization>false</InvariantGlobalization>
+      <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+      <!-- Suppress trimming warnings for external libs (Firebase, Google, etc) and metrics/design rules -->
+      <NoWarn>$(NoWarn);IL2104;CA1506;CA1040;CA1056</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <TrimmerRootAssembly Include="Bibently.Application.Abstractions" />
+      <TrimmerRootAssembly Include="Bibently.Application.Repository" />
+      <TrimmerRootAssembly Include="FirebaseAdmin" />
+      <TrimmerRootAssembly Include="Google.Apis.Auth" />
+      <TrimmerRootAssembly Include="Google.Cloud.Firestore" />
+    </ItemGroup>
+
+  <ItemGroup>
+    <SonarQubeSetting Include="sonar.coverage.exclusions">
+      <Value>**/Program.cs,**/Installers/*.cs,**/Mappings/*.cs</Value>
+    </SonarQubeSetting>
+  </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftAspNetCoreOpenApiVersion)" />
+        <PackageReference Include="Scalar.AspNetCore" Version="$(ScalarVersion)" />
+        <PackageReference Include="Riok.Mapperly" Version="$(RiokMapperlyVersion)" />
+        <PackageReference Include="Serilog.AspNetCore" Version="$(SerilogAspNetCoreVersion)" />
+        <PackageReference Include="FirebaseAdmin" Version="$(FirebaseAdminVersion)" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="$(FluentValidationVersion)" />
+        <PackageReference Include="Asp.Versioning.Http" Version="$(AspVersioningVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Resilience" Version="$(MicrosoftExtensionsResilienceVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Bibently.Application.Abstractions\Bibently.Application.Abstractions.csproj" />
+        <ProjectReference Include="..\Bibently.Application.Repository\Bibently.Application.Repository.csproj" />
+    </ItemGroup>
+
+</Project>

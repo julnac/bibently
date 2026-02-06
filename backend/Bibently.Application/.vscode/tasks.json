@@ -1,0 +1,105 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "unit test",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "--filter",
+        "\"Category!=Purpose-Integration&Category!=Purpose-EndToEnd\""
+      ]
+    },
+    {
+      "label": "publish",
+      "command": "dotnet",
+      "args": [
+        "publish",
+        "--self-contained",
+        "--runtime",
+        "linux-x64",
+        "-f:net10.0",
+        "-p:PublishDir=obj/docker/publish/net10.0/linux-x64"
+      ]
+    },
+    {
+      "label": "up",
+      "windows": {
+        "command": "docker.exe"
+      },
+      "linux": {
+        "command": "docker"
+      },
+      "osx": {
+        "command": "docker"
+      },
+      "args": [
+        "compose",
+        "-f",
+        ".docker/docker-compose.yml",
+        "--env-file",
+        ".docker/.env",
+        "up",
+        "--remove-orphans",
+        "--build",
+        "-d"
+      ],
+      "dependsOn": "publish"
+    },
+    {
+      "label": "down",
+      "windows": {
+        "command": "docker.exe"
+      },
+      "linux": {
+        "command": "docker"
+      },
+      "osx": {
+        "command": "docker"
+      },
+      "args": [
+        "compose",
+        "-f",
+        ".docker/docker-compose.yml",
+        "--env-file",
+        ".docker/.env",
+        "down",
+        "--volumes"
+      ]
+    },
+    {
+      "label": "integration test",
+      "windows": {
+        "command": "docker.exe"
+      },
+      "linux": {
+        "command": "docker"
+      },
+      "osx": {
+        "command": "docker"
+      },
+      "args": [
+        "compose",
+        "-f",
+        ".docker/docker-compose.yml",
+        "-f",
+        ".docker/docker-compose.integration.test.yml",
+        "--env-file",
+        ".docker/.env.test",
+        "up",
+        "--remove-orphans",
+        "--build",
+        "--abort-on-container-exit",
+        "--force-recreate",
+        "--renew-anon-volumes",
+        "--timeout",
+        "0"
+      ],
+      "dependsOn": "publish",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ]
+}

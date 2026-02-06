@@ -1,0 +1,52 @@
+<Project>
+    <PropertyGroup>
+        <MSTestSDKVersion>18.0.0</MSTestSDKVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <NetVersion>net10.0</NetVersion>
+      <LangVersion>14</LangVersion>
+      <NullableReferences>enable</NullableReferences>
+      <TreatWarningsAsErrorsValue>false</TreatWarningsAsErrorsValue>
+      <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+    <PropertyGroup>
+        <SerilogVersion>4.3.0</SerilogVersion>
+        <SerilogAspNetCoreVersion>10.0.0</SerilogAspNetCoreVersion>
+        <FirebaseAdminVersion>3.4.0</FirebaseAdminVersion>
+        <GoogleCloudFirestoreVersion>4.1.0</GoogleCloudFirestoreVersion>
+        <RiokMapperlyVersion>4.3.1</RiokMapperlyVersion>
+        <ScalarVersion>2.12.27</ScalarVersion>
+        <MicrosoftAspNetCoreOpenApiVersion>10.0.2</MicrosoftAspNetCoreOpenApiVersion>
+        <MicrosoftOpenApiVersion>3.3.1</MicrosoftOpenApiVersion>
+        <FluentValidationVersion>12.1.1</FluentValidationVersion>
+        <AspVersioningVersion>8.1.1</AspVersioningVersion>
+        <MicrosoftExtensionsResilienceVersion>10.2.0</MicrosoftExtensionsResilienceVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <MoqVersion>4.20.72</MoqVersion>
+        <XunitV3Version>3.2.2</XunitV3Version>
+        <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
+        <AutoFixtureVersion>5.0.0-preview0012</AutoFixtureVersion>
+        <JetBrainsVersion>2025.2.2</JetBrainsVersion>
+        <MicrosoftAspNetCoreMvcTestingVersion>10.0.2</MicrosoftAspNetCoreMvcTestingVersion>
+        <TestContainersVersion>4.10.0</TestContainersVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- do not upgrade FluentAssertions to version 8 or higher due to license changes  -->
+        <FluentAssertionsVersion>[7.2.0]</FluentAssertionsVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <SerilogAnalyzerVersion>0.15.0</SerilogAnalyzerVersion>
+        <LindhartAnalyserMissingAwaitWarningVersion>4.0.0-beta</LindhartAnalyserMissingAwaitWarningVersion>
+        <CoverletVersion>6.0.4</CoverletVersion>
+    </PropertyGroup>
+
+</Project>

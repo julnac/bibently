@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetVersion)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Firestore" Version="$(GoogleCloudFirestoreVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Resilience" Version="$(MicrosoftExtensionsResilienceVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bibently.Application.Abstractions\Bibently.Application.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

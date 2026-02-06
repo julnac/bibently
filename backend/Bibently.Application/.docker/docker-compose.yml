@@ -1,0 +1,41 @@
+services:
+
+  firebase-emulators:
+    image: andreysenov/firebase-tools:latest
+    ports:
+      - "4000:4000" # Emulator UI
+      - "8080:8080" # Firestore
+      - "9099:9099" # Auth
+    volumes:
+      - ..:/app # Mount root directory to access firebase.json
+    working_dir: /app
+    command: sh -c "firebase emulators:start --project demo-no-project --only firestore,auth"
+    healthcheck:
+      test: [ "CMD-SHELL", "netstat -an | grep 9099 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    environment:
+      - NODE_ENV=development
+    networks:
+      - bibently.application-services
+
+  bibently.application:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - GOOGLE_CLOUD_PROJECT=demo-no-project
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - firebase-emulators
+    networks:
+      - bibently.application-services
+
+networks:
+  bibently.application-services:
