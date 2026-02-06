@@ -2,8 +2,9 @@ import { useSearch } from '@/features/search/context/SearchContext';
 import { useTheme } from '@/core/state/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Text } from '@rneui/themed';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { darkMapStyle, lightMapStyle } from '@/features/map/config/map-styles';
 import Animated, {
@@ -13,16 +14,16 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CustomMarker from '../../components/map/CustomMarker';
-import FilterBar from '../../components/map/FilterBar';
-import FilterModal from '../../components/map/FilterModal';
-import DateFilterModal from '../../components/map/DateFilterModal';
-import PriceFilterModal from '../../components/map/PriceFilterModal';
-import ListEventCard from '../../components/map/ListEventCard';
-import MapEventCard from '../../components/map/MapEventCard';
-import SearchHereButton from '../../components/map/SearchHereButton';
-import SearchBar from '../../components/search/SearchBar';
-import { mockEvents } from '../../src/data/mockEvents';
+import CustomMarker from '../../../src/features/map/components/CustomMarker';
+import FilterBar from '../../../src/features/map/components/filters/FilterBar';
+import FilterModal from '../../../src/features/map/components/filters/FilterModal';
+import DateFilterModal from '../../../src/features/map/components/filters/DateFilterModal';
+import PriceFilterModal from '../../../src/features/map/components/filters/PriceFilterModal';
+import ListEventCard from '../../../src/features/map/components/ListEventCard';
+import MapEventCard from '../../../src/features/map/components/MapEventCard';
+import SearchHereButton from '../../../src/features/map/components/SearchHereButton';
+import SearchBar from '../../../src/features/search/components/SearchBar';
+import { eventsService } from '@/features/events/services/events.service';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -35,15 +36,20 @@ const filterOptions = {
   climate: ['Indoor', 'Outdoor'],
 };
 
-export default function MapScreen() {
+export default function Index() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { actualTheme } = useTheme();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(mockEvents[0]?.id || null);
   const [bookmarkedEvents, setBookmarkedEvents] = useState<Set<string>>(new Set());
   const [activeFilterModal, setActiveFilterModal] = useState<string | null>(null);
   const { location, query } = useSearch();
+
+  // API state management
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     types: [] as string[],
@@ -57,9 +63,36 @@ export default function MapScreen() {
 
   const listTranslateY = useSharedValue(SCREEN_HEIGHT);
 
+  // Fetch events from API
+  useEffect(() => {
+    async function fetchEvents() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await eventsService.getAll({
+          city: location || 'Gdańsk',
+          page_size: 100,
+        });
+        setEvents(data);
+        if (data.length > 0 && !selectedEventId) {
+          setSelectedEventId(data[0].id);
+        }
+      } catch (err) {
+        setError('Failed to load events. Please try again.');
+        console.error('Error loading events:', err);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchEvents();
+  }, [location]);
+
   // Filter events based on active filters
   const filteredEvents = useMemo(() => {
-    return mockEvents.filter((event) => {
+    return events.filter((event) => {
       if (filters.types.length > 0 && !filters.types.includes(event.type)) {
         return false;
       }
@@ -82,7 +115,7 @@ export default function MapScreen() {
       }
       return true;
     });
-  }, [filters]);
+  }, [events, filters]);
 
   const handleFilterPress = (filterType: string) => {
     setActiveFilterModal(filterType);
@@ -112,7 +145,7 @@ export default function MapScreen() {
   }, []);
 
   const handleSearchPress = () => {
-    router.push('/map/SearchScreen');
+    router.push('/map/search');
   };
 
   const handleSearchHere = () => {
@@ -132,13 +165,57 @@ export default function MapScreen() {
     listTranslateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 });
   };
 
-  const handleBack = () => {
-    router.push("/")
-  }
+  // const handleBack = () => {
+  //   router.push("/")
+  // }
 
   const animatedListStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: listTranslateY.value }],
   }));
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text>Loading events...</Text>
+        </View>
+      </>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+          <Text style={{ color: 'red', marginBottom: 10, textAlign: 'center' }}>{error}</Text>
+          <Button
+            onPress={() => {
+              setIsLoading(true);
+              setError(null);
+              eventsService.getAll({ city: location || 'Gdańsk', page_size: 100 })
+                .then((data) => {
+                  setEvents(data);
+                  if (data.length > 0 && !selectedEventId) {
+                    setSelectedEventId(data[0].id);
+                  }
+                })
+                .catch(() => {
+                  setError('Failed to load events');
+                  setEvents([]);
+                })
+                .finally(() => setIsLoading(false));
+            }}
+          >
+            Retry
+          </Button>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -147,9 +224,9 @@ export default function MapScreen() {
         {/* Search Bar */}
         <View className="absolute top-0 left-0 right-0 z-10 bg-white pt-12 px-4 pb-3">
           <View className="flex-row items-center justify-center">
-            <Pressable onPress={handleBack} className="p-2">
+            {/* <Pressable onPress={handleBack} className="p-2">
               <Ionicons name="chevron-back-outline" size={24} color="black" />
-            </Pressable>
+            </Pressable> */}
             {/* Search Bar */}
             <View className="flex-1">
               <SearchBar
@@ -217,15 +294,25 @@ export default function MapScreen() {
               className="absolute left-0 right-0 rounded-xl"
               style={{ bottom: insets.bottom }}
             >
-              <Pressable
+              <Button
                 onPress={handleShowList}
-                className="bg-white rounded-t-xl py-4 flex-row gap-2 items-center justify-center"
+                type="solid"
+                buttonStyle={{
+                  backgroundColor: 'white',
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12,
+                  paddingVertical: 16,
+                }}
+                containerStyle={{
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12,
+                }}
               >
-                <Text className="text-center font-semibold text-base">
+                <Text style={{ color: 'black', fontWeight: '600', fontSize: 16, marginRight: 8 }}>
                   Show list of {filteredEvents.length} events
                 </Text>
                 <Ionicons name="chevron-up-outline" size={20} color="black" />
-              </Pressable>
+              </Button>
             </View>
           </>
         )}
@@ -247,7 +334,7 @@ export default function MapScreen() {
         >
         <View className="flex-1 pt-44 bg-white">
           <ScrollView className="flex-1 px-4">
-            <Text className="text-sm mb-4 mx-auto py-4">
+            <Text style={{ fontSize: 14, marginBottom: 16, textAlign: 'center', paddingVertical: 16 }}>
               {filteredEvents.length} events
             </Text>
             {filteredEvents.map((event) => (
@@ -263,13 +350,20 @@ export default function MapScreen() {
 
           {/* View Map Button - Fixed at Bottom */}
           <View className="absolute bottom-12 left-0 right-0 justify-center items-center">
-            <Pressable
+            <Button
               onPress={() => handleViewMap(selectedEventId || filteredEvents[0]?.id)}
-              className="bg-black rounded-full py-3 px-5 flex-row items-center justify-center"
+              type="solid"
+              buttonStyle={{
+                backgroundColor: 'black',
+                borderRadius: 999,
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+              }}
+              icon={<Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />}
+              iconPosition="left"
             >
-              <Ionicons name="map-outline" size={20} color="white" />
-              <Text className="text-white font-semibold ml-2 text-base">View map</Text>
-            </Pressable>
+              View map
+            </Button>
           </View>
         </View>
       </Animated.View>

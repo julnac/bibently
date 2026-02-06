@@ -1,7 +1,7 @@
 export const API_ENDPOINTS = {
   events: {
-    list: '/events',
-    detail: (id: string) => `/events/${id}`,
+    list: '/events/',
+    detail: (id: string) => `/events/${id}/`,
   },
   // Future endpoints can be added here:
   // auth: {

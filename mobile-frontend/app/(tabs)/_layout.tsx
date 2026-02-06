@@ -1,9 +1,8 @@
-import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import '../global.css';
 
-const _Layout = () => {
+export default function Layout() {
   return (
     <Tabs
       screenOptions={{
@@ -29,39 +28,39 @@ const _Layout = () => {
         tabBarInactiveTintColor: "#9ca3af", 
       }}
     >
-        <Tabs.Screen
-            name="index"
-            options={{ 
-              headerShown: false, 
-              title: 'Home',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home-outline" size={size} color={color} />
-              ),
-            }}
-            
-        />
-        <Tabs.Screen
-            name="myEvents"
-            options={{ 
-              headerShown: false, 
-              title: 'myEvents',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="calendar-outline" size={size} color={color} />
-              ),
-            }}
-        />
-                <Tabs.Screen
-            name="profile"
-            options={{ 
-              headerShown: false, 
-              title: 'Profile',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="person-outline" size={size} color={color} />
-              ),
-            }}
-        />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Mapa',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="myEvents"
+        options={{
+          title: 'My Events',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profil',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   )
 }
 
-export default _Layout;

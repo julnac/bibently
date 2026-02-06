@@ -6,7 +6,7 @@ const SeeAllEventsButton = () => {
     const router = useRouter();
 
     const handleOpenMap = () => {
-        router.push("/map/MapScreen");
+        router.push("./");
     };
 
   return (

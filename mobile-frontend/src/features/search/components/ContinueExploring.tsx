@@ -1,10 +1,12 @@
 import { Text, View, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "@/core/state/user";
-import { useRouter } from "expo-router";
+import { useSearch } from "@/features/search/context/SearchContext";
+import { useRouter, Href } from "expo-router";
 
 const ContinueExploring = () => {
   const { recentSearches, clearRecentSearches, removeRecentSearch } = useUser();
+  const { setLocation, setQuery } = useSearch();
   const router = useRouter();
 
   if (recentSearches.length === 0) {
@@ -12,8 +14,11 @@ const ContinueExploring = () => {
   }
 
   const handleSearchPress = (location: string, query: string) => {
-    // Navigate to map with search parameters
-    router.push(`/map/MapScreen?location=${encodeURIComponent(location)}&query=${encodeURIComponent(query)}`);
+    // Ustaw wartości w SearchContext przed nawigacją
+    setLocation(location);
+    setQuery(query);
+    // Nawiguj do zakładki mapy
+    router.push('./');
   };
 
   return (

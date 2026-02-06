@@ -1,8 +1,10 @@
 import { View, Text, ScrollView, Pressable, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GoingConfirmationModal from "@/features/events/components/GoingConfirmationModal";
+import { eventsService } from "@/features/events/services/events.service";
+import { Event } from "@/features/events/types/event.types";
 
 const EventEntry = () => {
   const { id } = useLocalSearchParams();
@@ -11,6 +13,11 @@ const EventEntry = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isGoing, setIsGoing] = useState(false);
   const [showGoingModal, setShowGoingModal] = useState(false);
+
+  // API state management
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     "Description",
@@ -21,38 +28,38 @@ const EventEntry = () => {
     "Opinions",
   ];
 
-  // Mock data - replace with actual data fetching
-  const event = {
-    title: "Halloween Party",
-    likes: 140,
-    date: "17 września",
-    startTime: "19:00",
-    endTime: "2:00",
-    address: "ul. Wrzosowa 7, Gdańsk",
-    distance: "5km from you",
-    tags: ["Concert", "Techno", "Free"],
-    going: 40,
-    description:
-      "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-    location: {
-      address: "ul.Myśliwska 7, 80-233 Gdańsk",
-    },
-    organizer: {
-      name: "Halloween Party Organizer",
-      link: "link",
-      description:
-        "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
-    },
-  };
+  // Fetch event from API
+  useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+
+    async function fetchEvent() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await eventsService.getById(id);
+        setEvent(data);
+      } catch (err) {
+        setError('Failed to load event details');
+        console.error('Error loading event:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchEvent();
+  }, [id]);
 
   const renderTabContent = () => {
+    if (!event) return null;
+
     switch (activeTab) {
       case "Description":
         return (
           <View className="px-5 py-4">
             <Text className="text-2xl font-bold mb-4">Description</Text>
             <Text className="text-base text-gray-700 leading-6">
-              {event.description}
+              Event details for {event.title}
             </Text>
           </View>
         );
@@ -64,7 +71,7 @@ const EventEntry = () => {
             <View className="bg-gray-200 h-48 rounded-lg mb-4" />
             <View className="flex-row items-center justify-between">
               <Text className="text-base text-gray-700">
-                {event.location.address}
+                {event.address}
               </Text>
               <Pressable className="p-2">
                 <Ionicons name="copy-outline" size={20} color="#666" />
@@ -82,9 +89,9 @@ const EventEntry = () => {
             <View className="flex-row items-center bg-gray-50 p-4 rounded-lg">
               <View className="w-10 h-10 bg-gray-200 rounded mr-3" />
               <View>
-                <Text className="font-semibold">{event.organizer.name}</Text>
+                <Text className="font-semibold">Organizer</Text>
                 <Text className="text-sm text-gray-600">
-                  {event.organizer.link}
+                  Visit event page
                 </Text>
               </View>
             </View>
@@ -96,7 +103,7 @@ const EventEntry = () => {
           <View className="px-5 py-4">
             <Text className="text-2xl font-bold mb-4">Organizer</Text>
             <Text className="text-base text-gray-700 leading-6">
-              {event.organizer.description}
+              Information about the event organizer.
             </Text>
           </View>
         );
@@ -125,6 +132,30 @@ const EventEntry = () => {
         return null;
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text>Loading event...</Text>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error || !event) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center p-5">
+        <Text className="text-red-500 mb-3 text-center">{error || 'Event not found'}</Text>
+        <Pressable
+          onPress={() => router.back()}
+          className="bg-black px-5 py-3 rounded-full"
+        >
+          <Text className="text-white">Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
@@ -156,7 +187,7 @@ const EventEntry = () => {
                 size={20}
                 color="#DC5B40"
               />
-              <Text className="text-sm text-gray-600 ml-1">{event.likes}</Text>
+              <Text className="text-sm text-gray-600 ml-1">0</Text>
             </View>
           </View>
 
@@ -166,8 +197,7 @@ const EventEntry = () => {
           </Text>
 
           {/* Location */}
-          <Text className="text-sm text-gray-500 mb-1">{event.address}</Text>
-          <Text className="text-sm text-gray-400 mb-4">{event.distance}</Text>
+          <Text className="text-sm text-gray-500 mb-4">{event.address}</Text>
 
           {/* Tags */}
           <View className="flex-row flex-wrap mb-4">
@@ -295,7 +325,7 @@ const EventEntry = () => {
         eventDate={event.date}
         eventTime={`${event.startTime}-${event.endTime}`}
         eventAddress={event.address}
-        eventDistance={event.distance}
+        eventDistance=""
         onAddToCalendar={() => {
           // Add to calendar logic
           console.log("Add to calendar");

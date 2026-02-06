@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.API_URL || "http://192.168.1.25:5001";
+import { authService } from '../auth/authService';
+
+const API_BASE_URL = process.env.API_URL || "http://10.0.2.2:3000";
 
 export interface ApiClientConfig {
   baseURL?: string;
@@ -11,13 +13,36 @@ class ApiClient {
     this.baseURL = config?.baseURL || API_BASE_URL;
   }
 
+  private async getHeaders(): Promise<HeadersInit> {
+    const token = await authService.getToken();
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      // Token already includes "Bearer " prefix, so use it directly
+      headers['Authorization'] = token;
+    }
+
+    return headers;
+  }
+
   async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     try {
+      const headers = await this.getHeaders();
       const url = `${this.baseURL}${endpoint}`;
+
+      // Debug logging
+      if (__DEV__) {
+        console.log(`[API] Fetching: ${url}`);
+        console.log(`[API] Base URL: ${this.baseURL}`);
+        console.log(`[API] Headers:`, headers);
+      }
+
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
+          ...headers,
           ...options?.headers,
         },
       });

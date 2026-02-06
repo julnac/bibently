@@ -3,11 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import FilterBar from '../../components/map/FilterBar';
-import FilterModal from '../../components/map/FilterModal';
-import ListEventCard from '../../components/map/ListEventCard';
-import SearchBar from '../../components/search/SearchBar';
-import { mockEvents } from '../../src/data/mockEvents';
+import FilterBar from '../../../src/features/map/components/filters/FilterBar';
+import FilterModal from '../../../src/features/map/components/filters/FilterModal';
+import ListEventCard from '../../../src/features/map/components/ListEventCard';
+import SearchBar from '../../../src/features/search/components/SearchBar';
+import { mockEvents } from '../../../src/test/mocks/events.mock';
 
 const filterOptions = {
   types: ['Concert', 'Sport', 'Workshop', 'Party', 'Festival', 'Theater'],
@@ -84,11 +84,11 @@ export default function MapScreen() {
   }, []);
 
   const handleSearchPress = () => {
-    router.push('/map/SearchScreen');
+    router.push('./search');
   };
 
   const handleBack = () => {
-    router.push("/map/SearchScreen");
+    router.push("./search");
   };
 
   return (

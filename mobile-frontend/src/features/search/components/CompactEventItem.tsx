@@ -11,7 +11,10 @@ const CompactEventItem = ({ event }: CompactEventItemProps) => {
   const router = useRouter();
 
   const handlePress = () => {
-    router.push(`/eventEntries/${event.id}`);
+    router.push({
+      pathname: `/map/event/[id]`,
+      params: { id: event.id },
+    });
   };
 
   return (

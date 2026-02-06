@@ -17,7 +17,10 @@ const ListEventCard = ({
   const router = useRouter();
 
   const handleCardPress = () => {
-    router.push(`/eventEntries/${event.id}`);
+    router.push({
+      pathname: `/map/event/[id]`,
+      params: { id: event.id },
+    });
   };
 
   return (

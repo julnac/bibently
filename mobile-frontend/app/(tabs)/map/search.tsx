@@ -8,8 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { mockEvents } from "../../src/data/mockEvents";
-import '../global.css';
+import { mockEvents } from "../../../src/test/mocks/events.mock";
 
 type ActiveInput = 'none' | 'location' | 'query';
 
@@ -20,7 +19,7 @@ const locationSuggestions = [
   { id: '4', name: 'Berlin, Germany', icon: 'location' as const },
 ];
 
-export default function SearchScreen() {
+export default function Search() {
   const router = useRouter();
   const { addRecentSearch, userSettings } = useUser();
   const { setLocation, location, setQuery, query } = useSearch();
@@ -92,7 +91,7 @@ export default function SearchScreen() {
     } else if (location.trim() && query.trim()) {
       // Save to recent searches before navigating
       addRecentSearch(location, query);
-      router.push('/map/MapScreen');
+      router.push('./index');
     }
   }
 
@@ -104,7 +103,7 @@ export default function SearchScreen() {
     else if (location.trim() && query.trim()) {
       // Save to recent searches before navigating
       addRecentSearch(location, query);
-      router.push('/map/MapScreen');
+      router.push('./index');
     }
   };
 
@@ -161,7 +160,7 @@ export default function SearchScreen() {
             </View>
           </View>
           <View className="flex-row items-center mb-4 mt-2">
-            <Pressable onPress={() => router.push("/")} className="mr-3">
+            <Pressable onPress={() => router.push("./")} className="mr-3">
               <Ionicons name="close" size={24} color="#000" />
             </Pressable>
           </View>

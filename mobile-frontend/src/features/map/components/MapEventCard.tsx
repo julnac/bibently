@@ -36,7 +36,10 @@ const MapEventCard = ({
   }, [selectedEventId, events]);
 
   const handleEventPress = (eventId: string) => {
-    router.push(`/eventEntries/${eventId}`);
+    router.push({
+      pathname: `/map/event/[id]`,
+      params: { id: eventId },
+    });
   };
 
   const handleScroll = (event: any) => {
