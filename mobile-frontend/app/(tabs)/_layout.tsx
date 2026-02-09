@@ -1,8 +1,22 @@
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import '../global.css';
+import { useAuth } from "../../src/core/context/AuthContext";
 
 export default function Layout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const authProtectedListener = ({ navigation }: any) => ({
+    tabPress: (e: any) => {
+      if (!isAuthenticated && !isLoading) {
+        // Zapobiegaj zmianie zakładki
+        e.preventDefault();
+        // Przekieruj do logowania
+        router.push("/login");
+      }
+    },
+  });
+
   return (
     <Tabs
       screenOptions={{
@@ -41,6 +55,7 @@ export default function Layout() {
 
       <Tabs.Screen
         name="myEvents"
+        listeners={authProtectedListener} // Tylko dla zalogowanych
         options={{
           title: 'My Events',
           headerShown: false,
@@ -52,6 +67,7 @@ export default function Layout() {
 
       <Tabs.Screen
         name="profile"
+        listeners={authProtectedListener} // Tylko dla zalogowanych
         options={{
           title: 'Profil',
           headerShown: false,

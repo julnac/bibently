@@ -1,10 +1,10 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Event } from "@/features/events/types";
+import { EventEntity } from "@/core/types/event.types";
 import { useRouter } from "expo-router";
 
 interface ListEventCardProps {
-  event: Event;
+  event: EventEntity;
   onBookmark: (eventId: string) => void;
   isBookmarked: boolean;
 }
@@ -31,7 +31,7 @@ const ListEventCard = ({
       {/* Event Image Placeholder */}
       <View className="h-48 bg-gray-200 relative">
         {/* Tags on Image */}
-        <View className="absolute top-3 left-3 flex-row flex-wrap">
+        {/* <View className="absolute top-3 left-3 flex-row flex-wrap">
           {event.tags.slice(0, 3).map((tag) => (
             <View
               key={tag}
@@ -40,7 +40,7 @@ const ListEventCard = ({
               <Text className="text-xs text-gray-600">{tag}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Action Icons */}
         <View className="absolute top-3 right-3 flex-row">
@@ -61,23 +61,23 @@ const ListEventCard = ({
       <View className="p-4">
         <View className="flex-row justify-between items-start mb-2">
           <View className="flex-1 mr-2">
-            <Text className="font-semibold text-base mb-1">{event.title}</Text>
+            <Text className="font-semibold text-base mb-1">{event.name}</Text>
             <Text className="text-sm text-gray-500">
-              {event.date}, {event.startTime}-{event.endTime}
+              {event.startDate}, {event.startDate}-{event.startDate}
             </Text>
           </View>
-          <Text className="text-sm text-gray-600 font-medium">
+          {/* <Text className="text-sm text-gray-600 font-medium">
             {event.going} going
-          </Text>
+          </Text> */}
         </View>
 
         <Text className="text-sm text-gray-500 mb-3">
-          {event.address}
+          {event.location.address.street}
         </Text>
 
-        {event.price && (
+        {event.offer.price && (
           <Text className="text-xs text-gray-400">
-            od {event.price === 'free' ? '0' : '60'} zł
+            od {event.offer.price} zł
           </Text>
         )}
       </View>

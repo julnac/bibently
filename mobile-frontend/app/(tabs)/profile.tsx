@@ -2,11 +2,14 @@ import { Text, View, ScrollView, Image, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/core/state/theme";
 import { useState } from "react";
+import { useAuth } from "@/core/context/AuthContext";
 
 const Profile = () => {
   const { theme, actualTheme, setTheme } = useTheme();
   const [showThemeModal, setShowThemeModal] = useState(false);
   const isDark = actualTheme === "dark";
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
     <ScrollView className={`flex-1 px-4 pt-10 ${isDark ? "bg-background-dark" : "bg-white"}`}>

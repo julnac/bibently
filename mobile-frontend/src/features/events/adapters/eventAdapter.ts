@@ -1,11 +1,11 @@
-import { Event } from '../types/event.types';
-import { EventDTO } from '../types/EventDTO';
+import { EventEntity } from '@/core/types/event.types';
+// import { EventDTO } from '../types/EventDTO';
 
 /**
  * Formatuje datę ISO na polski format
  * "2024-07-20T22:00:00Z" → "20 lipca"
  */
-function formatPolishDate(isoDate: string): string {
+export function formatPolishDate(isoDate: string): string {
   const date = new Date(isoDate);
   const months = [
     'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
@@ -20,7 +20,7 @@ function formatPolishDate(isoDate: string): string {
  * Ekstraktuje czas z daty ISO
  * "2024-07-20T22:00:00Z" → "22:00"
  */
-function extractTime(isoDate: string): string {
+export function extractTime(isoDate: string): string {
   const date = new Date(isoDate);
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -31,7 +31,7 @@ function extractTime(isoDate: string): string {
  * Generuje losowe współrzędne dla Gdańska (54.35-54.40, 18.60-18.65)
  * UWAGA: To tymczasowe rozwiązanie - docelowo backend powinien dostarczać coordinates
  */
-function generateGdanskCoordinates() {
+export function generateGdanskCoordinates() {
   return {
     latitude: 54.35 + Math.random() * 0.05,
     longitude: 18.60 + Math.random() * 0.05,
@@ -41,7 +41,7 @@ function generateGdanskCoordinates() {
 /**
  * Buduje pełny adres z obiektu AddressDTO
  */
-function buildFullAddress(address: any): string {
+export function buildFullAddress(address: any): string {
   if (address.raw_address_string) {
     return address.raw_address_string;
   }
@@ -58,36 +58,36 @@ function buildFullAddress(address: any): string {
 /**
  * Główny adapter: EventDTO → Event (frontend format)
  */
-export function adaptEventFromAPI(dto: EventDTO): Event {
-  return {
-    id: dto.id,
-    title: dto.name,
-    date: formatPolishDate(dto.start_date),
-    startTime: extractTime(dto.start_date),
-    endTime: extractTime(dto.end_date),
-    tags: dto.keywords || [],
-    address: buildFullAddress(dto.location.address),
-    going: 0,  // MOCK: Backend nie dostarcza liczby uczestników
-    coordinates: generateGdanskCoordinates(),  // MOCK: Backend nie dostarcza współrzędnych
-    type: dto.type || 'Event',
-    price: (dto.offer?.price && dto.offer.price > 0) ? 'paid' : 'free',
-    neighborhood: dto.location.address.city || undefined,
-    climate: dto.attendance_mode === 'online' ? 'indoor' : 'outdoor',
-  };
-}
+// export function adaptEventFromAPI(dto: EventDTO): Event {
+//   return {
+//     id: dto.id,
+//     title: dto.name,
+//     date: formatPolishDate(dto.start_date),
+//     startTime: extractTime(dto.start_date),
+//     endTime: extractTime(dto.end_date),
+//     tags: dto.keywords || [],
+//     address: buildFullAddress(dto.location.address),
+//     going: 0,  // MOCK: Backend nie dostarcza liczby uczestników
+//     coordinates: generateGdanskCoordinates(),  // MOCK: Backend nie dostarcza współrzędnych
+//     type: dto.type || 'Event',
+//     price: (dto.offer?.price && dto.offer.price > 0) ? 'paid' : 'free',
+//     neighborhood: dto.location.address.city || undefined,
+//     climate: dto.attendance_mode === 'online' ? 'indoor' : 'outdoor',
+//   };
+// }
 
 /**
  * Adapter dla listy wydarzeń
  */
-export function adaptEventsFromAPI(dtos: EventDTO[]): Event[] {
-  return dtos.map(adaptEventFromAPI);
-}
+// export function adaptEventsFromAPI(dtos: EventDTO[]): Event[] {
+//   return dtos.map(adaptEventFromAPI);
+// }
 
 /**
  * Adapter odwrotny: Event → EventDTO (do POST/PUT)
  * Używany przy tworzeniu/edycji wydarzeń
  */
-export function adaptEventToAPI(event: Partial<Event>): Partial<EventDTO> {
-  // TODO: Implementacja w przyszłości, jeśli będzie potrzeba tworzenia wydarzeń z frontendu
-  throw new Error('Not implemented yet');
-}
+// export function adaptEventToAPI(event: Partial<Event>): Partial<EventDTO> {
+//   // TODO: Implementacja w przyszłości, jeśli będzie potrzeba tworzenia wydarzeń z frontendu
+//   throw new Error('Not implemented yet');
+// }

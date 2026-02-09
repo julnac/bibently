@@ -1,4 +1,4 @@
-import { Event } from "@/features/events/types";
+import { EventEntity } from "@/core/types/event.types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -8,7 +8,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32; // 16px padding on each side
 
 interface MapEventCardProps {
-  events: Event[];
+  events: EventEntity[];
   selectedEventId: string | null;
   onBookmark: (eventId: string) => void;
   bookmarkedEvents: Set<string>;
@@ -52,7 +52,7 @@ const MapEventCard = ({
 
   if (events.length === 0) return null;
 
-  const renderEventCard = ({ item: event }: { item: Event }) => {
+  const renderEventCard = ({ item: event }: { item: EventEntity }) => {
     const isBookmarked = bookmarkedEvents.has(event.id);
 
     return (
@@ -66,7 +66,7 @@ const MapEventCard = ({
             {/* Title and Bookmark */}
             <View className="flex-row justify-between items-start mb-1">
               <Text className="font-semibold text-base flex-1 mr-2">
-                {event.title}
+                {event.name}
               </Text>
               <Pressable
                 onPress={(e) => {
@@ -85,11 +85,11 @@ const MapEventCard = ({
 
             {/* Date and Time */}
             <Text className="text-xs text-gray-500 mb-2">
-              {event.date}, {event.startTime}-{event.endTime}
+              {event.startDate}
             </Text>
 
             {/* Tags */}
-            <View className="flex-row flex-wrap mb-2">
+            {/* <View className="flex-row flex-wrap mb-2">
               {event.tags.slice(0, 3).map((tag, index) => (
                 <View
                   key={`${tag}-${index}`}
@@ -98,11 +98,11 @@ const MapEventCard = ({
                   <Text className="text-xs text-gray-700">{tag}</Text>
                 </View>
               ))}
-            </View>
+            </View> */}
 
             {/* Address */}
             <Text className="text-xs text-gray-500">
-              {event.address}
+              {event.location.address.city}
             </Text>
           </View>
         </Pressable>

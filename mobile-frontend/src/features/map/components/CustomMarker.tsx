@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Marker } from "react-native-maps";
-import { Event } from "@/features/events/types";
+import { EventEntity } from "@/core/types/event.types";
 
 interface CustomMarkerProps {
-  event: Event;
+  event: EventEntity;
   isSelected: boolean;
   onPress: () => void;
 }
 
-const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) => {
+export const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) => {
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
   useEffect(() => {

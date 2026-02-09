@@ -49,8 +49,8 @@ export default function Search() {
       results = results.filter(
         (event) =>
           event.title.toLowerCase().includes(queryLower) ||
-          event.type.toLowerCase().includes(queryLower) ||
-          event.tags.some((tag) => tag.toLowerCase().includes(queryLower))
+          event.type.toLowerCase().includes(queryLower)
+          // event.tags.some((tag) => tag.toLowerCase().includes(queryLower))
       );
     }
 
@@ -111,7 +111,6 @@ export default function Search() {
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-1 bg-white">
         {/* Header with Back Button */}
         <View className="px-4 pt-12 pb-3 flex-row items-start gap-2">

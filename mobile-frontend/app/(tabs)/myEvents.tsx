@@ -3,10 +3,13 @@ import LikedSection from "@/features/my-events/components/LikedSection";
 import UpcomingEvents from "@/features/my-events/components/UpcomingEvents";
 import Calendar from "@/features/my-events/components/Calendar";
 import { useTheme } from "@/core/state/theme";
+import { useAuth } from "@/core/context/AuthContext";
 
-const myEvents = () => {
+const MyEvents = () => {
   const { actualTheme } = useTheme();
   const isDark = actualTheme === "dark";
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
     <ScrollView className={`flex-1 px-4 pt-10 ${isDark ? "bg-background-dark" : "bg-white"}`}>
@@ -39,4 +42,4 @@ const myEvents = () => {
   );
 }
 
-export default myEvents;
+export default MyEvents;

@@ -1,23 +1,20 @@
 import { View, Text, ScrollView, Pressable, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import GoingConfirmationModal from "@/features/events/components/GoingConfirmationModal";
-import { eventsService } from "@/features/events/services/events.service";
-import { Event } from "@/features/events/types/event.types";
+import { useEvent } from '@/src/core/hooks/useEvent';
+import { extractTime, buildFullAddress, formatPolishDate } from '@/features/events/adapters/eventAdapter';
 
 const EventEntry = () => {
   const { id } = useLocalSearchParams();
+  const { event, loading, error } = useEvent(id);
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Description");
   const [isLiked, setIsLiked] = useState(false);
   const [isGoing, setIsGoing] = useState(false);
   const [showGoingModal, setShowGoingModal] = useState(false);
-
-  // API state management
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     "Description",
@@ -28,28 +25,6 @@ const EventEntry = () => {
     "Opinions",
   ];
 
-  // Fetch event from API
-  useEffect(() => {
-    if (!id || typeof id !== 'string') return;
-
-    async function fetchEvent() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await eventsService.getById(id);
-        setEvent(data);
-      } catch (err) {
-        setError('Failed to load event details');
-        console.error('Error loading event:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchEvent();
-  }, [id]);
-
   const renderTabContent = () => {
     if (!event) return null;
 
@@ -59,7 +34,7 @@ const EventEntry = () => {
           <View className="px-5 py-4">
             <Text className="text-2xl font-bold mb-4">Description</Text>
             <Text className="text-base text-gray-700 leading-6">
-              Event details for {event.title}
+              Event details for {event.name}
             </Text>
           </View>
         );
@@ -71,7 +46,7 @@ const EventEntry = () => {
             <View className="bg-gray-200 h-48 rounded-lg mb-4" />
             <View className="flex-row items-center justify-between">
               <Text className="text-base text-gray-700">
-                {event.address}
+                {event.location.address.street}
               </Text>
               <Pressable className="p-2">
                 <Ionicons name="copy-outline" size={20} color="#666" />
@@ -134,7 +109,7 @@ const EventEntry = () => {
   };
 
   // Loading state
-  if (isLoading) {
+  if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
         <Text>Loading event...</Text>
@@ -179,28 +154,26 @@ const EventEntry = () => {
           {/* Title and Like */}
           <View className="flex-row justify-between items-start mb-3">
             <Text className="text-2xl font-bold flex-1 mr-3">
-              {event.title}
+              {event.name}
             </Text>
-            <View className="flex-row items-center">
+            {/* <View className="flex-row items-center">
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}
                 size={20}
                 color="#DC5B40"
               />
               <Text className="text-sm text-gray-600 ml-1">0</Text>
-            </View>
+            </View> */}
           </View>
 
-          {/* Date and Time */}
           <Text className="text-base text-red-500 mb-1">
-            {event.date}, {event.startTime}-{event.endTime}
+            {event.startDate}
           </Text>
 
-          {/* Location */}
-          <Text className="text-sm text-gray-500 mb-4">{event.address}</Text>
+          <Text className="text-sm text-gray-500 mb-4">{event.location.address.city}</Text>
 
           {/* Tags */}
-          <View className="flex-row flex-wrap mb-4">
+          {/* <View className="flex-row flex-wrap mb-4">
             {event.tags.map((tag, index) => (
               <View
                 key={index}
@@ -209,11 +182,10 @@ const EventEntry = () => {
                 <Text className="text-sm text-gray-600">{tag}</Text>
               </View>
             ))}
-          </View>
+          </View> */}
 
           {/* Going Count with Avatars */}
-          <View className="flex-row items-center mb-6">
-            <Text className="text-sm text-gray-700 mr-2">going: {event.going}</Text>
+          {/* <View className="flex-row items-center mb-6">
             <View className="flex-row">
               {[1, 2, 3].map((_, index) => (
                 <View
@@ -223,7 +195,7 @@ const EventEntry = () => {
                 />
               ))}
             </View>
-          </View>
+          </View> */}
         </View>
 
         {/* Tabs */}
@@ -295,12 +267,12 @@ const EventEntry = () => {
 
           {/* Calendar Icon */}
           <Pressable className="bg-primary border border-gray-300 rounded-full p-3 mr-2">
-            <Ionicons name="calendar-outline" size={20} color="#fff" />
+            <Ionicons name="calendar-outline" size={20} color="#ffffff00" />
           </Pressable>
 
           {/* Share Icon */}
           <Pressable className="bg-primary border border-gray-300 rounded-full p-3 mr-2">
-            <Ionicons name="share-outline" size={20} color="#fff" />
+            <Ionicons name="share-outline" size={20} color="#ffffff00" />
           </Pressable>
 
           {/* Favorite Icon */}
@@ -321,11 +293,11 @@ const EventEntry = () => {
       <GoingConfirmationModal
         visible={showGoingModal}
         onClose={() => setShowGoingModal(false)}
-        eventTitle={event.title}
-        eventDate={event.date}
-        eventTime={`${event.startTime}-${event.endTime}`}
-        eventAddress={event.address}
-        eventDistance=""
+        eventTitle={event.name}
+        eventDate={formatPolishDate(event.startDate)}
+        eventTime={`${extractTime(event.startDate)}-${extractTime(event.endDate? event.endDate : event.startDate)}`}
+        eventAddress={buildFullAddress(event.location.address)}
+        eventDistance="5 km"
         onAddToCalendar={() => {
           // Add to calendar logic
           console.log("Add to calendar");
