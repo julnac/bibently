@@ -21,7 +21,13 @@ public static class AuthInstaller
                 FirebaseAuthenticationHandler.SchemeName, null);
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(nameof(Role.Admin), policy => policy.RequireRole(nameof(Role.Admin)))
+            // Admin-only operations (bulk import, delete any event)
+            .AddPolicy(nameof(Permission.ManageEvents), policy => policy.RequireRole(nameof(Role.Admin)))
+            // Any authenticated user can create events and attend
+            .AddPolicy(nameof(Permission.WriteEvents), policy => policy.RequireRole(nameof(Role.Admin), nameof(Role.User)))
+            // Premium-gated features (future: VIP events, early access)
+            .AddPolicy(nameof(Permission.PremiumFeature), policy => policy.RequireClaim(nameof(CustomClaim.premium_attendee), "true"))
+            // Fallback: all endpoints require authentication unless AllowAnonymous
             .SetFallbackPolicy(
                 new AuthorizationPolicyBuilder()
                     .AddAuthenticationSchemes(FirebaseAuthenticationHandler.SchemeName)

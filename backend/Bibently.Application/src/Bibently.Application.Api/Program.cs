@@ -26,7 +26,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services
     .AddFirebase(builder.Environment.IsDevelopment())
     .AddSingleton<IEventsRepository, FirestoreEventsRepository>()
-    .AddSingleton<ITrackingRepository, FirestoreTrackingRepository>();
+    .AddSingleton<ITrackingRepository, FirestoreTrackingRepository>()
+    .AddSingleton<IUsersRepository, FirestoreUsersRepository>();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -38,8 +39,10 @@ builder.Services.AddPrivateServerClient(builder.Configuration);
 
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<ITrackingService, TrackingService>();
+builder.Services.AddScoped<IUsersService, UsersService>();
 
 builder.Services.AddAppAuth();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -112,6 +115,7 @@ var apiV1 = app.MapGroup("/api/v1");
 
 EventsEndpoints.Map(apiV1);
 TrackingEndpoints.Map(apiV1);
+MeEndpoints.Map(apiV1);
 
 // === Utility Endpoints (non-versioned) ===
 UtilityEndpoints.Map(app);

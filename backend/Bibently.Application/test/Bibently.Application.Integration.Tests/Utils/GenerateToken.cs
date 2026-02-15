@@ -7,21 +7,28 @@ using System.Text.Json;
 public static class TokenTool
 {
     /// <summary>
-    /// Generates a test JWT.
-    /// Can be called from a Unit Test, Rider's Immediate Window, or Main.
+    /// Generates a test JWT with Admin role (backward-compatible).
     /// </summary>
     public static string Generate(string? adminUid)
+    {
+        return Generate(adminUid, new Dictionary<string, object> { { "role", "admin" } });
+    }
+
+    /// <summary>
+    /// Generates a test JWT with custom claims.
+    /// Pass an empty dictionary for a regular user (no role claim → server defaults to User).
+    /// </summary>
+    public static string Generate(string? uid, Dictionary<string, object> customClaims)
     {
         // --- 1. HANDLE ARGUMENTS ---
         var email = "test-user@example.com";
 
         // --- 2. CONFIGURATION ---
         var googleProjectId = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_PROJECT") ?? "demo-no-project";
-        adminUid ??= "demo-admin-uid";
+        uid ??= "demo-admin-uid";
         const string testSecret = "test-secret-key-for-development-only";
 
         // --- 3. GENERATE CLAIMS ---
-
         var claims = new Dictionary<string, object>
         {
             { "email", email },
@@ -29,13 +36,18 @@ public static class TokenTool
             { "iss", $"https://securetoken.google.com/{googleProjectId}" },
             { "aud", googleProjectId },
             { "auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-            { "user_id", adminUid },
-            { "sub", adminUid },
+            { "user_id", uid },
+            { "sub", uid },
             { "iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
             { "exp", DateTimeOffset.UtcNow.AddHours(3).ToUnixTimeSeconds() },
-            { "firebase", new { identities = new { }, sign_in_provider = "custom" } },
-            {"role", "admin"}
+            { "firebase", new { identities = new { }, sign_in_provider = "custom" } }
         };
+
+        // Merge custom claims (role, premium_attendee, etc.)
+        foreach (var kvp in customClaims)
+        {
+            claims[kvp.Key] = kvp.Value;
+        }
 
         // --- 4. BUILD JWT ---
         var headerEncoded = SafeBase64Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { alg = "HS256", typ = "JWT" })));

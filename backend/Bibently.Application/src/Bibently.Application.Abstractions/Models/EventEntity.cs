@@ -22,4 +22,5 @@ public class EventEntity
     public required string Provider { get; set; }
     public int AttendeeCount { get; set; }
     public required DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
 }

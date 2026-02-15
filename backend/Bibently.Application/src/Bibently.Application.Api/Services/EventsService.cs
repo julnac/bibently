@@ -1,20 +1,25 @@
 namespace Bibently.Application.Api.Services;
 
+using System.Security.Claims;
 using Bibently.Application.Abstractions.Models;
 using Bibently.Application.Api.Clients;
 using Bibently.Application.Api.Mappings;
 using Bibently.Application.Repository;
+using Microsoft.AspNetCore.Http;
 
-public class EventsService(IPrivateServerClient privateServerClient, IEventsRepository repository, AppMapper mapper) : IEventsService
+public class EventsService(IPrivateServerClient privateServerClient, IEventsRepository repository, AppMapper mapper, IHttpContextAccessor httpContextAccessor) : IEventsService
 {
     public async Task<EventEntity> AddEvent(CreateEventEntityRequest request, CancellationToken token)
     {
-        // todo: integrate with private server when ready, for now we directly write to the repository
-        // var eventEntity = await privateServerClient.CreateEventAsync(request, token);
-
+        // todo: set createdBy first so ssot receives it
+        //var eventEntity = await privateServerClient.CreateEventAsync(request, token);
         var eventDocument = mapper.Map(request);
-        eventDocument.CreatedAt = DateTime.UtcNow;
+
+        // Populate CreatedBy from the authenticated user's UID
+        var userId = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        eventDocument.CreatedBy = userId;
         eventDocument.Id = Guid.NewGuid().ToString();
+        eventDocument.CreatedAt = DateTime.UtcNow;
         await repository.InsertEvent(eventDocument, token);
 
         return mapper.Map(eventDocument);

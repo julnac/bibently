@@ -55,12 +55,23 @@ public sealed class FirebaseAuthenticationHandler(
             }
 
             // Map the "role" custom claim to ClaimTypes.Role for RequireRole() policies
-            if (userInfo.Claims.TryGetValue("role", out var role) && role is string roleStr)
+            if (userInfo.Claims.TryGetValue(nameof(CustomClaim.role), out var role) && role is string roleStr)
             {
                 if (Enum.TryParse<Role>(roleStr, true, out var roleEnum))
                 {
                     claims.Add(new Claim(ClaimTypes.Role, roleEnum.ToString()));
                 }
+            }
+            else
+            {
+                // Every authenticated user gets "User" role by default
+                claims.Add(new Claim(ClaimTypes.Role, nameof(Role.User)));
+            }
+
+            // Extract premium_attendee custom claim for subscription gating
+            if (userInfo.Claims.TryGetValue(nameof(CustomClaim.premium_attendee), out var premium) && premium is bool isPremium && isPremium)
+            {
+                claims.Add(new Claim(nameof(CustomClaim.premium_attendee), "true"));
             }
 
             var identity = new ClaimsIdentity(claims, Scheme.Name);

@@ -37,6 +37,9 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [JsonSerializable(typeof(HttpValidationProblemDetails))]
 [JsonSerializable(typeof(Dictionary<string, string[]>))]
+[JsonSerializable(typeof(UserPermissionsResponse))]
+[JsonSerializable(typeof(UserFeatureFlags))]
+[JsonSerializable(typeof(UserEntity))]
 internal partial class AppJsonContext : JsonSerializerContext
 {
 }

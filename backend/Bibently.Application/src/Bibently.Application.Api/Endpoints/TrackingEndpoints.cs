@@ -18,7 +18,7 @@ public static class TrackingEndpoints
                 var result = await svc.GetTrackingEventById(id, token);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
-            .RequireAuthorization(nameof(Role.Admin));
+            .RequireAuthorization(nameof(Permission.ManageEvents));
 
         app.MapPost("/tracking",
             async ([FromBody] TrackingEvent dto,
@@ -46,6 +46,6 @@ public static class TrackingEndpoints
                 await svc.DeleteTrackingEventById(id, token);
                 return Results.NoContent();
             })
-            .RequireAuthorization(nameof(Role.Admin));
+            .RequireAuthorization(nameof(Permission.ManageEvents));
     }
 }

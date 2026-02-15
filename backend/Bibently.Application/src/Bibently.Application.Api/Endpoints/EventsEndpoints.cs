@@ -46,7 +46,7 @@ public static class EventsEndpoints
                 await cacheStore.EvictByTagAsync("events", token);
                 return result;
             })
-            .RequireAuthorization(nameof(Role.Admin))
+            .RequireAuthorization(nameof(Permission.WriteEvents))
             .WithValidation<CreateEventEntityRequest>();
 
         app.MapPost("/events/bulk",
@@ -60,7 +60,7 @@ public static class EventsEndpoints
                 await cacheStore.EvictByTagAsync("events", token);
                 return Results.Ok();
             })
-            .RequireAuthorization(nameof(Role.Admin))
+            .RequireAuthorization(nameof(Permission.ManageEvents))
             .WithValidation<List<EventEntity>>();
 
         app.MapDelete("/events/{id:guid}",
@@ -80,7 +80,7 @@ public static class EventsEndpoints
                 await cacheStore.EvictByTagAsync("events", token);
                 return Results.NoContent();
             })
-            .RequireAuthorization(nameof(Role.Admin));
+            .RequireAuthorization(nameof(Permission.ManageEvents));
 
         app.MapGet("/events/{id:guid}",
             async ([FromRoute] Guid id,

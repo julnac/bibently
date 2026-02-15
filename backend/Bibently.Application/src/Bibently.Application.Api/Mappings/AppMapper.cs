@@ -30,8 +30,12 @@ public partial class AppMapper
 
     public partial IEnumerable<EventDocument> Map(IEnumerable<EventEntity> source);
 
+    public partial UserEntity Map(UserDocument source);
+    public partial UserDocument Map(UserEntity source);
+
     [MapperIgnoreTarget(nameof(EventDocument.Id))]
     [MapperIgnoreTarget(nameof(EventDocument.CreatedAt))]
     [MapperIgnoreTarget(nameof(EventDocument.AttendeeCount))]
+    [MapperIgnoreTarget(nameof(EventDocument.CreatedBy))]
     public partial EventDocument Map(CreateEventEntityRequest source);
 }

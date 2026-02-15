@@ -12,13 +12,16 @@ using System.Net;
 using System.Net.Http.Json;
 using Bibently.Application.Integration.Tests.Fixtures;
 using Bibently.Application.Integration.Tests.Utils;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Repository = Bibently.Application.Repository;
 
 public class ProgramTests
     : IClassFixture<BibentlyWebApplicationFactory>,
         IClassFixture<FirebaseEmulatorsContainerFixture>
 {
     private readonly HttpClient _client;
+    private readonly BibentlyWebApplicationFactory _factory;
 
     // API v1 base path for versioned endpoints
     private const string ApiV1 = "/api/v1";
@@ -28,6 +31,7 @@ public class ProgramTests
         var adminUserUtility = new AdminUserUtility(outputHelper);
         adminUserUtility.EnsureLocalAdminUserAsync("demo-admin-uid");
 
+        _factory = factory;
         _client = factory.CreateClient();
     }
 
@@ -481,6 +485,221 @@ public class ProgramTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // --- RBAC Tests ---
+
+    [Fact]
+    public async Task GivenRegularUser_WhenPostEvent_ThenReturnsOk()
+    {
+        // Arrange - token with no role claim (server defaults to User)
+        var token = TokenTool.Generate("demo-user-uid", new Dictionary<string, object>());
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var @event = CreateEventEntity(Guid.NewGuid(), "Warsaw", "User Created Event");
+
+        // Act
+        using var jsonContent = JsonContent.Create(@event);
+        var response = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
+
+        // Assert - WriteEvents policy allows User role
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GivenAnonymous_WhenPostEvent_ThenReturnsUnauthorized()
+    {
+        // Arrange - no auth header
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        var @event = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Anonymous Event");
+
+        // Act
+        using var jsonContent = JsonContent.Create(@event);
+        var response = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GivenRegularUser_WhenDeleteEvent_ThenReturnsForbidden()
+    {
+        // Arrange - create event as admin first
+        var adminToken = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", adminToken);
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "Warsaw", "Admin Event For User Delete Test"));
+
+        // Switch to regular user
+        var userToken = TokenTool.Generate("demo-user-uid", new Dictionary<string, object>());
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userToken);
+
+        // Act
+        var deleteResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert - ManageEvents policy requires Admin
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GivenRegularUser_WhenGetPermissions_ThenReturnsCorrectFlags()
+    {
+        // Arrange - token with no role claim (server defaults to User)
+        var token = TokenTool.Generate("demo-user-uid", new Dictionary<string, object>());
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var permissions = await response.Content.ReadFromJsonAsync<UserPermissionsResponse>(TestContext.Current.CancellationToken);
+        permissions.Should().NotBeNull();
+        permissions!.Role.Should().Be("User");
+        permissions.IsPremium.Should().BeFalse();
+        permissions.Features.CanCreateEvents.Should().BeTrue();
+        permissions.Features.CanDeleteAnyEvent.Should().BeFalse();
+        permissions.Features.CanBulkImport.Should().BeFalse();
+        permissions.Features.CanAccessVipEvents.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GivenAdmin_WhenGetPermissions_ThenReturnsAllFlagsTrue()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var permissions = await response.Content.ReadFromJsonAsync<UserPermissionsResponse>(TestContext.Current.CancellationToken);
+        permissions.Should().NotBeNull();
+        permissions!.Role.Should().Be("Admin");
+        permissions.Features.CanCreateEvents.Should().BeTrue();
+        permissions.Features.CanDeleteAnyEvent.Should().BeTrue();
+        permissions.Features.CanBulkImport.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GivenAnonymous_WhenGetPermissions_ThenReturnsUnauthorized()
+    {
+        // Arrange - no auth
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // --- User Document Storage Tests ---
+
+    [Fact]
+    public async Task GivenAdmin_WhenGetPermissions_ThenUserDocumentIsCreatedInFirestore()
+    {
+        // Arrange
+        var uid = $"admin-doc-test-{Guid.NewGuid():N}";
+        var token = TokenTool.Generate(uid);
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert - verify user document was created in Firestore
+        using var scope = _factory.Services.CreateScope();
+        var usersRepo = scope.ServiceProvider.GetRequiredService<Repository.IUsersRepository>();
+        var userDoc = await usersRepo.GetUserByUid(uid, TestContext.Current.CancellationToken);
+
+        userDoc.Should().NotBeNull();
+        userDoc!.Uid.Should().Be(uid);
+        userDoc.Role.Should().Be("Admin");
+        userDoc.Email.Should().Be("test-user@example.com");
+        userDoc.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        userDoc.LastSeenAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task GivenRegularUser_WhenGetPermissions_ThenUserDocumentHasUserRole()
+    {
+        // Arrange - no role claim → defaults to User
+        var uid = $"user-doc-test-{Guid.NewGuid():N}";
+        var token = TokenTool.Generate(uid, new Dictionary<string, object>());
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert
+        using var scope = _factory.Services.CreateScope();
+        var usersRepo = scope.ServiceProvider.GetRequiredService<Repository.IUsersRepository>();
+        var userDoc = await usersRepo.GetUserByUid(uid, TestContext.Current.CancellationToken);
+
+        userDoc.Should().NotBeNull();
+        userDoc!.Role.Should().Be("User");
+        userDoc.IsPremium.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GivenExistingUser_WhenGetPermissionsAgain_ThenLastSeenAtIsUpdated()
+    {
+        // Arrange - first call to create the document
+        var uid = $"lastseen-test-{Guid.NewGuid():N}";
+        var token = TokenTool.Generate(uid);
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        using var scope1 = _factory.Services.CreateScope();
+        var usersRepo = scope1.ServiceProvider.GetRequiredService<Repository.IUsersRepository>();
+        var firstDoc = await usersRepo.GetUserByUid(uid, TestContext.Current.CancellationToken);
+        firstDoc.Should().NotBeNull();
+        var firstLastSeen = firstDoc!.LastSeenAt;
+
+        // Wait briefly to ensure timestamps differ
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+
+        // Act - second call
+        await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert - LastSeenAt should be updated, CreatedAt should be preserved
+        using var scope2 = _factory.Services.CreateScope();
+        var usersRepo2 = scope2.ServiceProvider.GetRequiredService<Repository.IUsersRepository>();
+        var secondDoc = await usersRepo2.GetUserByUid(uid, TestContext.Current.CancellationToken);
+
+        secondDoc.Should().NotBeNull();
+        secondDoc!.LastSeenAt.Should().BeOnOrAfter(firstLastSeen);
+        secondDoc.CreatedAt.Should().Be(firstDoc.CreatedAt);
+    }
+
+    [Fact]
+    public async Task GivenPremiumUser_WhenGetPermissions_ThenUserDocumentHasPremiumFlag()
+    {
+        // Arrange
+        var uid = $"premium-doc-test-{Guid.NewGuid():N}";
+        var token = TokenTool.Generate(uid, new Dictionary<string, object>
+        {
+            { "role", "admin" },
+            { "premium_attendee", true }
+        });
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync(new Uri($"{ApiV1}/me/permissions", UriKind.Relative), TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert
+        using var scope = _factory.Services.CreateScope();
+        var usersRepo = scope.ServiceProvider.GetRequiredService<Repository.IUsersRepository>();
+        var userDoc = await usersRepo.GetUserByUid(uid, TestContext.Current.CancellationToken);
+
+        userDoc.Should().NotBeNull();
+        userDoc!.IsPremium.Should().BeTrue();
     }
 
     /// <summary>

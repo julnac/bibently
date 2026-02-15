@@ -64,4 +64,7 @@ public class EventDocument
 
     [FirestoreProperty("createdAt")]
     public DateTime CreatedAt { get; set; }
+
+    [FirestoreProperty("createdBy")]
+    public string? CreatedBy { get; set; }
 }
