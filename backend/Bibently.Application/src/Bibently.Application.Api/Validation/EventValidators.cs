@@ -39,6 +39,14 @@ public class AddressValidator : AbstractValidator<Address>
         RuleFor(x => x.PostalCode)
             .MaximumLength(20).WithMessage("Postal code cannot exceed 20 characters.")
             .When(x => !string.IsNullOrEmpty(x.PostalCode));
+
+        RuleFor(x => x.Latitude)
+            .InclusiveBetween(-90, 90).WithMessage("Latitude must be between -90 and 90 degrees.")
+            .When(x => x.Latitude.HasValue);
+
+        RuleFor(x => x.Longitude)
+            .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180 degrees.")
+            .When(x => x.Longitude.HasValue);
     }
 }
 
@@ -117,7 +125,7 @@ public class OfferValidator : AbstractValidator<Offer>
 }
 
 /// <summary>
-/// Validator for EventEntity model.
+/// Validator for EventEntity model (used for responses and internal operations).
 /// </summary>
 public class EventEntityValidator : AbstractValidator<EventEntity>
 {
@@ -223,22 +231,126 @@ public class EventEntityValidator : AbstractValidator<EventEntity>
 
         RuleFor(x => x.CreatedAt)
             .NotEmpty().WithMessage("Created date is required.");
+
+        RuleFor(x => x.AttendeeCount)
+            .GreaterThanOrEqualTo(0).WithMessage("Attendee count cannot be negative.");
     }
 }
 
 /// <summary>
-/// Validator for a list of EventEntity (bulk operations).
+/// Validator for CreateEventEntityRequest model (used for POST create/bulk operations).
+/// Does not validate Id or CreatedAt since those are set by the server.
+/// </summary>
+public class CreateEventEntityRequestValidator : AbstractValidator<CreateEventEntityRequest>
+{
+    private static readonly HashSet<string> ValidEventTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Event", "MusicEvent", "TheaterEvent", "SportsEvent", "BusinessEvent",
+        "EducationEvent", "ExhibitionEvent", "Festival", "SocialEvent", "DanceEvent",
+        "ComedyEvent", "ChildrensEvent", "LiteraryEvent", "ScreeningEvent", "FoodEvent"
+    };
+
+    private static readonly HashSet<string> ValidEventStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "EventScheduled", "EventCancelled", "EventPostponed", "EventRescheduled", "EventMovedOnline"
+    };
+
+    private static readonly HashSet<string> ValidAttendanceModes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "OfflineEventAttendanceMode", "OnlineEventAttendanceMode", "MixedEventAttendanceMode"
+    };
+
+    public CreateEventEntityRequestValidator()
+    {
+        RuleFor(x => x.Type)
+            .NotEmpty().WithMessage("Event type is required.")
+            .Must(t => ValidEventTypes.Contains(t))
+            .WithMessage($"Event type must be one of: {string.Join(", ", ValidEventTypes)}");
+
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("Event name is required.")
+            .MaximumLength(300).WithMessage("Event name cannot exceed 300 characters.");
+
+        RuleFor(x => x.Description)
+            .NotEmpty().WithMessage("Event description is required.")
+            .MaximumLength(10000).WithMessage("Event description cannot exceed 10000 characters.");
+
+        RuleFor(x => x.ArticleBody)
+            .MaximumLength(50000).WithMessage("Article body cannot exceed 50000 characters.")
+            .When(x => !string.IsNullOrEmpty(x.ArticleBody));
+
+        RuleFor(x => x.Keywords)
+            .Must(k => k == null || k.Count <= 50)
+            .WithMessage("Cannot have more than 50 keywords.");
+
+        RuleForEach(x => x.Keywords)
+            .MaximumLength(100).WithMessage("Each keyword cannot exceed 100 characters.")
+            .When(x => x.Keywords != null && x.Keywords.Count != 0);
+
+        RuleFor(x => x.StartDate)
+            .NotEmpty().WithMessage("Start date is required.");
+
+        RuleFor(x => x.EndDate)
+            .GreaterThanOrEqualTo(x => x.StartDate)
+            .WithMessage("End date must be after or equal to start date.")
+            .When(x => x.EndDate.HasValue);
+
+        RuleFor(x => x.DatePublished)
+            .NotEmpty().WithMessage("Date published is required.");
+
+        RuleFor(x => x.Url)
+            .NotEmpty().WithMessage("Event URL is required.")
+            .MaximumLength(2000).WithMessage("Event URL cannot exceed 2000 characters.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("Event URL must be a valid absolute URL.");
+
+        RuleFor(x => x.ImageUrl)
+            .MaximumLength(2000).WithMessage("Image URL cannot exceed 2000 characters.")
+            .Must(uri => string.IsNullOrEmpty(uri) || Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("Image URL must be a valid absolute URL.")
+            .When(x => !string.IsNullOrEmpty(x.ImageUrl));
+
+        RuleFor(x => x.EventStatus)
+            .NotEmpty().WithMessage("Event status is required.")
+            .Must(s => ValidEventStatuses.Contains(s))
+            .WithMessage($"Event status must be one of: {string.Join(", ", ValidEventStatuses)}");
+
+        RuleFor(x => x.AttendanceMode)
+            .NotEmpty().WithMessage("Attendance mode is required.")
+            .Must(m => ValidAttendanceModes.Contains(m))
+            .WithMessage($"Attendance mode must be one of: {string.Join(", ", ValidAttendanceModes)}");
+
+        RuleFor(x => x.Location)
+            .NotNull().WithMessage("Location is required.")
+            .SetValidator(new LocationValidator());
+
+        RuleFor(x => x.Performer)
+            .NotNull().WithMessage("Performer is required.")
+            .SetValidator(new OrganizationValidator());
+
+        RuleFor(x => x.Organizer)
+            .SetValidator(new OrganizationValidator()!)
+            .When(x => x.Organizer != null);
+
+        RuleFor(x => x.Offer)
+            .NotNull().WithMessage("Offer is required.")
+            .SetValidator(new OfferValidator());
+
+        RuleFor(x => x.Provider)
+            .NotEmpty().WithMessage("Provider is required.")
+            .MaximumLength(200).WithMessage("Provider cannot exceed 200 characters.");
+    }
+}
+
+/// <summary>
+/// Validator for bulk event list — enforces Firestore batch write limit of 500 items.
 /// </summary>
 public class EventEntityListValidator : AbstractValidator<List<EventEntity>>
 {
-    private const int MaxBatchSize = 500;
-
     public EventEntityListValidator()
     {
-        RuleFor(x => x)
-            .NotEmpty().WithMessage("Event list cannot be empty.")
-            .Must(x => x.Count <= MaxBatchSize)
-            .WithMessage($"Firestore batch limit exceeded. Maximum {MaxBatchSize} items allowed per batch.");
+        RuleFor(x => x.Count)
+            .LessThanOrEqualTo(500).WithMessage("Bulk operations are limited to 500 items per request.");
 
         RuleForEach(x => x)
             .SetValidator(new EventEntityValidator());

@@ -1,8 +1,7 @@
 namespace Bibently.Application.Abstractions.Models;
 
-public class EventEntity
+public class CreateEventEntityRequest
 {
-    public required Guid Id { get; set; }
     public required string Type { get; set; }
     public required string Name { get; set; }
     public required string Description { get; set; }
@@ -20,6 +19,4 @@ public class EventEntity
     public Organization? Organizer { get; set; }
     public required Offer Offer { get; set; }
     public required string Provider { get; set; }
-    public int AttendeeCount { get; set; }
-    public required DateTime CreatedAt { get; set; }
 }

@@ -13,7 +13,6 @@ using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
-using Bibently.Application.Api.Services;
 
 public static class FirebaseInstaller
 {
@@ -70,8 +69,6 @@ public static class FirebaseInstaller
 
             return FirestoreDb.Create(projectId, firestoreClient);
         });
-
-        services.AddSingleton<IFirebaseAuthService, FirebaseAuthService>();
 
         return services;
     }

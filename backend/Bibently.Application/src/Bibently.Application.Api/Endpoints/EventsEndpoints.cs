@@ -1,5 +1,6 @@
 namespace Bibently.Application.Api.Endpoints;
 
+using Bibently.Application.Abstractions.Enums;
 using Bibently.Application.Abstractions.Models;
 using Bibently.Application.Api.Services;
 using Bibently.Application.Api.Validation;
@@ -29,12 +30,13 @@ public static class EventsEndpoints
 
                 return await svc.GetEvents(searchRequest, token);
             })
+            .AllowAnonymous()
             .WithValidation<FilterRequest, SortRequest>()
             .RequireRateLimiting("Strict")
             .CacheOutput("EventsCache");
 
         app.MapPost("/events",
-            async ([FromBody] EventEntity dto,
+            async ([FromBody] CreateEventEntityRequest dto,
                     IEventsService svc,
                     IOutputCacheStore cacheStore,
                     CancellationToken token) =>
@@ -44,7 +46,8 @@ public static class EventsEndpoints
                 await cacheStore.EvictByTagAsync("events", token);
                 return result;
             })
-            .WithValidation<EventEntity>();
+            .RequireAuthorization(nameof(Role.Admin))
+            .WithValidation<CreateEventEntityRequest>();
 
         app.MapPost("/events/bulk",
             async ([FromBody] List<EventEntity> dtos,
@@ -57,6 +60,7 @@ public static class EventsEndpoints
                 await cacheStore.EvictByTagAsync("events", token);
                 return Results.Ok();
             })
+            .RequireAuthorization(nameof(Role.Admin))
             .WithValidation<List<EventEntity>>();
 
         app.MapDelete("/events/{id:guid}",
@@ -73,10 +77,10 @@ public static class EventsEndpoints
                 }
 
                 await svc.DeleteEventById(id, token);
-                // Invalidate events cache when event is deleted
                 await cacheStore.EvictByTagAsync("events", token);
                 return Results.NoContent();
-            });
+            })
+            .RequireAuthorization(nameof(Role.Admin));
 
         app.MapGet("/events/{id:guid}",
             async ([FromRoute] Guid id,
@@ -86,7 +90,42 @@ public static class EventsEndpoints
                 var eventEntity = await svc.GetEventById(id, token);
                 return eventEntity is not null ? Results.Ok(eventEntity) : Results.NotFound();
             })
+            .AllowAnonymous()
             .CacheOutput(policy => policy.Expire(TimeSpan.FromMinutes(5)).Tag("events"));
+
+        app.MapPost("/events/{id:guid}/attend",
+            async ([FromRoute] Guid id,
+                IEventsService svc,
+                IOutputCacheStore cacheStore,
+                CancellationToken token) =>
+            {
+                var found = await svc.AttendEvent(id, token);
+                if (!found)
+                {
+                    return Results.NotFound(new { error = $"Event with ID '{id}' was not found." });
+                }
+
+                await cacheStore.EvictByTagAsync("events", token);
+                return Results.Ok();
+            })
+            .RequireAuthorization();
+
+        app.MapDelete("/events/{id:guid}/attend",
+            async ([FromRoute] Guid id,
+                IEventsService svc,
+                IOutputCacheStore cacheStore,
+                CancellationToken token) =>
+            {
+                var found = await svc.UnattendEvent(id, token);
+                if (!found)
+                {
+                    return Results.NotFound(new { error = $"Event with ID '{id}' was not found." });
+                }
+
+                await cacheStore.EvictByTagAsync("events", token);
+                return Results.Ok();
+            })
+            .RequireAuthorization();
     }
 }
 

@@ -25,4 +25,10 @@ public class AddressDocument
 
     [FirestoreProperty("rawAddressString")]
     public string? RawAddressString { get; set; }
+
+    [FirestoreProperty("latitude")]
+    public double? Latitude { get; set; }
+
+    [FirestoreProperty("longitude")]
+    public double? Longitude { get; set; }
 }

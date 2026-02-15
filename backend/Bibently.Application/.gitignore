@@ -79,3 +79,19 @@ bower_components/
 # vs code workspace
 *.code-workspace
 .DS_Store
+
+# Terraform
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+override.tf
+
+# deploy
+!.deploy/
+.deploy/.terraform/
+!.deploy/main.tf
+!.deploy/.terraform.lock.hcl
+
+.docker/firebase-debug.log
+.docker/firestore-debug.log

@@ -14,4 +14,6 @@ public interface IEventsRepository
     Task<EventDocument?> GetEventById(Guid id, CancellationToken token);
 
     Task DeleteEventById(Guid id, CancellationToken token);
+
+    Task<bool> IncrementAttendeeCount(Guid id, int delta, CancellationToken token);
 }

@@ -146,4 +146,21 @@ public class FirestoreEventsRepository : IEventsRepository
             await docRef.DeleteAsync(cancellationToken: ct);
         }, token);
     }
+
+    public async Task<bool> IncrementAttendeeCount(Guid id, int delta, CancellationToken token)
+    {
+        return await _pipeline.ExecuteAsync(async ct =>
+        {
+            var docRef = _db.Collection(CollectionPath).Document(id.ToString());
+            var snapshot = await docRef.GetSnapshotAsync(ct);
+
+            if (!snapshot.Exists)
+            {
+                return false;
+            }
+
+            await docRef.UpdateAsync("attendeeCount", FieldValue.Increment(delta), cancellationToken: ct);
+            return true;
+        }, token);
+    }
 }

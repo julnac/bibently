@@ -1,5 +1,6 @@
 namespace Bibently.Application.Api.Endpoints;
 
+using Bibently.Application.Abstractions.Enums;
 using Bibently.Application.Abstractions.Models;
 using Bibently.Application.Api.Services;
 using Bibently.Application.Api.Validation;
@@ -16,7 +17,8 @@ public static class TrackingEndpoints
             {
                 var result = await svc.GetTrackingEventById(id, token);
                 return result is null ? Results.NotFound() : Results.Ok(result);
-            });
+            })
+            .RequireAuthorization(nameof(Role.Admin));
 
         app.MapPost("/tracking",
             async ([FromBody] TrackingEvent dto,
@@ -26,6 +28,7 @@ public static class TrackingEndpoints
                 await svc.AddTrackingEvent(dto, token);
                 return Results.Created($"/api/v1/tracking/{dto.Id}", dto);
             })
+            .AllowAnonymous()
             .WithValidation<TrackingEvent>();
 
         app.MapDelete("/tracking/{id:guid}",
@@ -42,6 +45,7 @@ public static class TrackingEndpoints
 
                 await svc.DeleteTrackingEventById(id, token);
                 return Results.NoContent();
-            });
+            })
+            .RequireAuthorization(nameof(Role.Admin));
     }
 }

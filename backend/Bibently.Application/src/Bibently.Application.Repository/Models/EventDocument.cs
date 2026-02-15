@@ -6,7 +6,7 @@ using Google.Cloud.Firestore;
 public class EventDocument
 {
     [FirestoreProperty("id")]
-    public required string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
     [FirestoreProperty("type")]
     public required string Type { get; set; }
@@ -59,6 +59,9 @@ public class EventDocument
     [FirestoreProperty("provider")]
     public required string Provider { get; set; }
 
+    [FirestoreProperty("attendeeCount")]
+    public int AttendeeCount { get; set; }
+
     [FirestoreProperty("createdAt")]
-    public required DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

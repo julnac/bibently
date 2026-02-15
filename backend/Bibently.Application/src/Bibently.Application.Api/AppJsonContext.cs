@@ -11,6 +11,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(ApiPaginationResponse))]
 [JsonSerializable(typeof(EventEntity))]
 [JsonSerializable(typeof(List<EventEntity>))]
+[JsonSerializable(typeof(CreateEventEntityRequest))]
 [JsonSerializable(typeof(TrackingEvent))]
 [JsonSerializable(typeof(List<TrackingEvent>))]
 [JsonSerializable(typeof(FilterRequest))]
@@ -20,6 +21,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(EventSortableAccessor?))]
 [JsonSerializable(typeof(SortDirection))]
 [JsonSerializable(typeof(SortDirection?))]
+[JsonSerializable(typeof(Role))]
 [JsonSerializable(typeof(string[]))]
 [JsonSerializable(typeof(Address))]
 [JsonSerializable(typeof(Location))]
@@ -33,7 +35,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(IEnumerable<EventEntity>))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
-[JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpValidationProblemDetails))]
+[JsonSerializable(typeof(HttpValidationProblemDetails))]
 [JsonSerializable(typeof(Dictionary<string, string[]>))]
 internal partial class AppJsonContext : JsonSerializerContext
 {

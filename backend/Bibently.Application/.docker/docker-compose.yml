@@ -11,13 +11,29 @@ services:
     working_dir: /app
     command: sh -c "firebase emulators:start --project demo-no-project --only firestore,auth"
     healthcheck:
-      test: [ "CMD-SHELL", "netstat -an | grep 9099 || exit 1" ]
+      test: [ "CMD", "node", "-e", "const h=require('http');h.get('http://localhost:8080/',r=>process.exit(0)).on('error',()=>process.exit(1))" ]
       interval: 5s
       timeout: 5s
-      retries: 3
-      start_period: 5s
+      retries: 20
+      start_period: 20s
     environment:
       - NODE_ENV=development
+    networks:
+      - bibently.application-services
+
+  firestore-seed:
+    image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+    volumes:
+      - ..:/app
+    working_dir: /app
+    environment:
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+      - FIRESTORE_PROJECT_ID=demo-no-project
+    command: >
+      sh -c "dotnet run --project tools/Bibently.SeedData -c Release"
+    depends_on:
+      firebase-emulators:
+        condition: service_healthy
     networks:
       - bibently.application-services
 
@@ -34,7 +50,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - CORS_ALLOWED_ORIGINS=http://localhost:8081
     depends_on:
-      - firebase-emulators
+      firebase-emulators:
+        condition: service_healthy
+      firestore-seed:
+        condition: service_completed_successfully
     networks:
       - bibently.application-services
 

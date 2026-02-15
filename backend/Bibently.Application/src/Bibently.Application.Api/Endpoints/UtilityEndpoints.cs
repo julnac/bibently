@@ -12,6 +12,6 @@ public static class UtilityEndpoints
                 """,
                 contentType: "text/plain"
             )
-        ).ExcludeFromDescription();
+        ).AllowAnonymous().ExcludeFromDescription();
     }
 }

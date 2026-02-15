@@ -1,21 +1,29 @@
 namespace Bibently.Application.Api.Services;
 
 using Bibently.Application.Abstractions.Models;
+using Bibently.Application.Api.Clients;
 using Bibently.Application.Api.Mappings;
 using Bibently.Application.Repository;
 
-public class EventsService(IEventsRepository repository, AppMapper mapper) : IEventsService
+public class EventsService(IPrivateServerClient privateServerClient, IEventsRepository repository, AppMapper mapper) : IEventsService
 {
-    public async Task<EventEntity> AddEvent(EventEntity eventEntity, CancellationToken token)
+    public async Task<EventEntity> AddEvent(CreateEventEntityRequest request, CancellationToken token)
     {
-        var eventDocument = await repository.InsertEvent(mapper.Map(eventEntity), token);
+        var eventEntity = await privateServerClient.CreateEventAsync(request, token);
 
-        return mapper.Map(eventDocument);
+        var eventDocument = mapper.Map(eventEntity);
+        await repository.InsertEvent(eventDocument, token);
+
+        return eventEntity;
     }
 
-    public async Task AddEvents(IEnumerable<EventEntity> eventEntities, CancellationToken token)
+    public async Task AddEvents(List<EventEntity> eventEntities, CancellationToken token)
     {
         var eventDocuments = mapper.Map(eventEntities);
+        foreach (var eventDocument in eventDocuments)
+        {
+            eventDocument.CreatedAt = DateTime.UtcNow;
+        }
         await repository.InsertEvents(eventDocuments, token);
     }
 
@@ -40,5 +48,14 @@ public class EventsService(IEventsRepository repository, AppMapper mapper) : IEv
     public Task DeleteEventById(Guid id, CancellationToken token)
     {
         return repository.DeleteEventById(id, token);
+    }
+    public Task<bool> AttendEvent(Guid id, CancellationToken token)
+    {
+        return repository.IncrementAttendeeCount(id, 1, token);
+    }
+
+    public Task<bool> UnattendEvent(Guid id, CancellationToken token)
+    {
+        return repository.IncrementAttendeeCount(id, -1, token);
     }
 }

@@ -135,7 +135,7 @@ public static class OpenApiInstaller
         {
             // Map OpenAPI endpoint once - it serves all registered document names
             // Documents are available at: /openapi/v1.json, /openapi/v2.json, etc.
-            app.MapOpenApi("/openapi/{documentName}.json");
+            app.MapOpenApi().AllowAnonymous();
 
             // Configure Scalar with version switching support
             app.MapScalarApiReference(options =>
@@ -153,7 +153,7 @@ public static class OpenApiInstaller
                 {
                     options.AddDocument(version, $"/openapi/{version}.json");
                 }
-            });
+            }).AllowAnonymous();
         }
 
         return app;

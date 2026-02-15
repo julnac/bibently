@@ -35,64 +35,16 @@ public class ProgramTests
     public async Task GivenValidEvent_WhenPostEvent_ThenEventIsSavedToDb()
     {
         // Arrange
-        var eventId = Guid.NewGuid();
-        var address = new Address
-        {
-            Type = "PostalAddress",
-            Name = "Test Address",
-            Street = "Test Street 1",
-            City = "Warsaw",
-            Country = "PL",
-            PostalCode = "00-001"
-        };
-
-        var eventEntity = new EventEntity
-        {
-            Id = eventId,
-            Type = "MusicEvent",
-            Name = "Test Concert",
-            Description = "A test concert description",
-            StartDate = DateTime.UtcNow.AddDays(1),
-            DatePublished = DateTime.UtcNow,
-            Url = "https://example.com/events/1",
-            EventStatus = "EventScheduled",
-            AttendanceMode = "OfflineEventAttendanceMode",
-            Provider = "TestProvider",
-            CreatedAt = DateTime.UtcNow,
-            Location = new Location
-            {
-                Type = "Place",
-                Name = "Test Venue",
-                Address = address
-            },
-            Performer = new Organization
-            {
-                Type = "MusicGroup",
-                Name = "Test Band",
-                Url = "https://example.com/testband",
-                Address = address
-            },
-            Offer = new Offer
-            {
-                Type = "Offer",
-                Price = 100,
-                Currency = "PLN",
-                Url = "https://example.com/tickets/1",
-                IsAvailable = true
-            }
-        };
-        using var jsonContent = JsonContent.Create(eventEntity);
-
-        // Act - Post the event
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
 
-        // Assert Post Response
-        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var @event = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Test Concert");
+
+        // Act - Post the event (server generates Id)
+        var createdEvent = await PostEventAsync(@event);
 
         // Act - Get the event back to verify it's in the DB
-        var uri = new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative);
+        var uri = new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative);
         var getResponse = await _client.GetAsync(uri, TestContext.Current.CancellationToken);
 
         // Assert Get Response
@@ -100,8 +52,8 @@ public class ProgramTests
         var savedEvent = await getResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
 
         savedEvent.Should().NotBeNull();
-        savedEvent.Id.Should().Be(eventId);
-        savedEvent.Name.Should().Be(eventEntity.Name);
+        savedEvent!.Id.Should().Be(createdEvent.Id);
+        savedEvent.Name.Should().Be(@event.Name);
     }
 
     [Fact]
@@ -115,17 +67,8 @@ public class ProgramTests
         var uniqueCity1 = $"FilterTestCity_{Guid.NewGuid():N}";
         var uniqueCity2 = $"ExcludedCity_{Guid.NewGuid():N}";
 
-        var event1 = CreateEventEntity(Guid.NewGuid(), uniqueCity1, "Concert A");
-        var event2 = CreateEventEntity(Guid.NewGuid(), uniqueCity2, "Concert B");
-        using var jsonContent1 = JsonContent.Create(event1);
-        using var jsonContent2 = JsonContent.Create(event2);
-
-        var post1 = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent1, TestContext.Current.CancellationToken);
-        var post2 = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent2, TestContext.Current.CancellationToken);
-
-        // Verify posts succeeded
-        post1.StatusCode.Should().Be(HttpStatusCode.OK, "Event 1 should be created successfully");
-        post2.StatusCode.Should().Be(HttpStatusCode.OK, "Event 2 should be created successfully");
+        var created1 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), uniqueCity1, "Concert A"));
+        var created2 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), uniqueCity2, "Concert B"));
 
         // Act
         var response = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity1}", UriKind.Relative), TestContext.Current.CancellationToken);
@@ -134,8 +77,8 @@ public class ProgramTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         result.Should().NotBeNull();
-        result.Items.Should().ContainSingle(i => i.Id == event1.Id, "Only the event in our unique city should be found");
-        result.Items.Should().NotContain(i => i.Id == event2.Id, "Event in different city should NOT be in filtered results");
+        result!.Items.Should().ContainSingle(i => i.Id == created1.Id, "Only the event in our unique city should be found");
+        result.Items.Should().NotContain(i => i.Id == created2.Id, "Event in different city should NOT be in filtered results");
     }
 
     [Fact]
@@ -217,18 +160,15 @@ public class ProgramTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var eventId = Guid.NewGuid();
-        var @event = CreateEventEntity(eventId, "Warsaw", "To Delete");
-        using var eventJson = JsonContent.Create(@event);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), eventJson, TestContext.Current.CancellationToken);
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "Warsaw", "To Delete"));
 
         // Act
-        var deleteResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var deleteResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
 
         // Assert
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var getResponse = await _client.GetAsync(new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var getResponse = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -396,13 +336,9 @@ public class ProgramTests
         };
         event3.StartDate = DateTime.UtcNow.AddDays(1);
 
-        using var content1 = JsonContent.Create(event1);
-        using var content2 = JsonContent.Create(event2);
-        using var content3 = JsonContent.Create(event3);
-
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), content1, TestContext.Current.CancellationToken);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), content2, TestContext.Current.CancellationToken);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), content3, TestContext.Current.CancellationToken);
+        await PostEventAsync(event1);
+        var created2 = await PostEventAsync(event2);
+        await PostEventAsync(event3);
 
         // Act - Query with Price > 100 AND Create Date > Now + 5 days
         // MinPrice = 100 (inequality on offer.price)
@@ -418,7 +354,7 @@ public class ProgramTests
         var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         result.Should().NotBeNull();
         // Should only contain event2 (Price 150 > 100, Date +10 > +5)
-        result.Items.Should().ContainSingle(i => i.Id == event2.Id);
+        result!.Items.Should().ContainSingle(i => i.Id == created2.Id);
     }
 
     [Fact]
@@ -450,6 +386,117 @@ public class ProgramTests
         limitEncountered.Should().BeTrue("Should hit 429 TooManyRequests after exceeding the strict limit of 10 requests");
     }
 
+    [Fact]
+    public async Task GivenExistingEvent_WhenAttend_ThenAttendeeCountIsIncremented()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "Warsaw", "Attend Test Event"));
+
+        // Act
+        var attendResponse = await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+
+        // Assert
+        attendResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var getResponse = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var savedEvent = await getResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
+        savedEvent.Should().NotBeNull();
+        savedEvent!.AttendeeCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GivenExistingEvent_WhenUnattend_ThenAttendeeCountIsDecremented()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "Warsaw", "Unattend Test Event"));
+
+        // First attend twice
+        await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+        await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+
+        // Act - unattend once
+        var unattendResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        unattendResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var getResponse = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var savedEvent = await getResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
+        savedEvent.Should().NotBeNull();
+        savedEvent!.AttendeeCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GivenExistingEvent_WhenMultipleAttends_ThenAttendeeCountAccumulates()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "Warsaw", "Multi Attend Event"));
+
+        // Act - attend 3 times
+        await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+        await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+        await _client.PostAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+
+        // Assert
+        var getResponse = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var savedEvent = await getResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
+        savedEvent.Should().NotBeNull();
+        savedEvent!.AttendeeCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task GivenNonExistingEvent_WhenAttend_ThenReturnsNotFound()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var nonExistentEventId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.PostAsync(new Uri($"{ApiV1}/events/{nonExistentEventId}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GivenUnauthenticatedUser_WhenAttend_ThenReturnsUnauthorized()
+    {
+        // Arrange - clear auth header
+        _client.DefaultRequestHeaders.Authorization = null;
+        var eventId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.PostAsync(new Uri($"{ApiV1}/events/{eventId}/attend", UriKind.Relative), null, TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    /// Posts an event to the single-create endpoint and returns the server-created EventEntity
+    /// (with server-generated Id and CreatedAt).
+    /// </summary>
+    private async Task<EventEntity> PostEventAsync(EventEntity source)
+    {
+        using var jsonContent = JsonContent.Create(source);
+        var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK, $"Failed to create event: {source.Name}");
+        var created = await postResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
+        created.Should().NotBeNull();
+        return created!;
+    }
+
     private static EventEntity CreateEventEntity(Guid id, string city, string name)
     {
         var address = new Address
@@ -459,7 +506,9 @@ public class ProgramTests
             Street = "Test Street 1",
             City = city,
             Country = "PL",
-            PostalCode = "00-001"
+            PostalCode = "00-001",
+            Latitude = 52.2297,
+            Longitude = 21.0122
         };
 
         return new EventEntity

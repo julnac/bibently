@@ -24,9 +24,14 @@ public partial class AppMapper
 
     public partial TrackingEvent Map(TrackingEventDocument source);
     public partial TrackingEventDocument Map(TrackingEvent source);
-    
+
     public partial List<EventEntity> Map(List<EventDocument> source);
     public partial List<EventDocument> Map(List<EventEntity> source);
 
     public partial IEnumerable<EventDocument> Map(IEnumerable<EventEntity> source);
+
+    [MapperIgnoreTarget(nameof(EventDocument.Id))]
+    [MapperIgnoreTarget(nameof(EventDocument.CreatedAt))]
+    [MapperIgnoreTarget(nameof(EventDocument.AttendeeCount))]
+    public partial EventDocument Map(CreateEventEntityRequest source);
 }

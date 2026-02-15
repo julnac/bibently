@@ -15,4 +15,8 @@ public class Address
     public string? PostalCode { get; init; }
 
     public string? RawAddressString { get; init; }
+
+    public double? Latitude { get; init; }
+
+    public double? Longitude { get; init; }
 }

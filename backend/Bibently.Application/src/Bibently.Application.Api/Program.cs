@@ -7,7 +7,6 @@ using Bibently.Application.Api.Mappings;
 using Bibently.Application.Api.Middleware;
 using Bibently.Application.Api.Services;
 using Bibently.Application.Repository;
-using Polly.CircuitBreaker;
 using Serilog;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -35,10 +34,12 @@ if (builder.Environment.IsDevelopment())
 }
 builder.Services.AddSingleton<AppMapper>();
 
+builder.Services.AddPrivateServerClient(builder.Configuration);
+
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<ITrackingService, TrackingService>();
 
-builder.Services.AddAuthorization();
+builder.Services.AddAppAuth();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -88,8 +89,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApiUi();
 }
-app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/live").AllowAnonymous();
+app.MapHealthChecks("/health/ready").AllowAnonymous();
 
 app.UseSerilogRequestLogging(opts =>
 {
@@ -100,7 +101,8 @@ app.UseSerilogRequestLogging(opts =>
 app.UseAppCors();
 app.UseRateLimiter();
 app.UseSecurityHeaders();
-app.UseAuthorizationMiddleware();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseResponseCompression();
 app.UseOutputCache();
 

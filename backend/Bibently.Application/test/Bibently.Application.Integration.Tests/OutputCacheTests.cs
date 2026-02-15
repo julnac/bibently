@@ -42,19 +42,18 @@ public class OutputCacheTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // Create 3 events to seed the database
-        var events = new List<EventEntity>
+        // Create 3 events to seed the database (server generates Ids)
+        var createdEvents = new List<EventEntity>();
+        var eventSources = new List<EventEntity>
         {
             CreateEventEntity(Guid.NewGuid(), uniqueCity, "Cache Test Event 1"),
             CreateEventEntity(Guid.NewGuid(), uniqueCity, "Cache Test Event 2"),
             CreateEventEntity(Guid.NewGuid(), uniqueCity, "Cache Test Event 3")
         };
 
-        foreach (var evt in events)
+        foreach (var evt in eventSources)
         {
-            using var jsonContent = JsonContent.Create(evt);
-            var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
-            postResponse.StatusCode.Should().Be(HttpStatusCode.OK, $"Failed to seed event: {evt.Name}");
+            createdEvents.Add(await PostEventAsync(evt));
         }
 
         // Clear auth header for GET requests (public access)
@@ -80,7 +79,7 @@ public class OutputCacheTests
         content2!.Items.Should().HaveCount(3, "Second response (cached) should contain 3 seeded events");
 
         // Verify all seeded events are present
-        foreach (var evt in events)
+        foreach (var evt in createdEvents)
         {
             content1.Items.Should().Contain(e => e.Id == evt.Id);
             content2.Items.Should().Contain(e => e.Id == evt.Id);
@@ -96,14 +95,8 @@ public class OutputCacheTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var event1 = CreateEventEntity(Guid.NewGuid(), city1, "City1 Event");
-        var event2 = CreateEventEntity(Guid.NewGuid(), city2, "City2 Event");
-
-        using var jsonContent1 = JsonContent.Create(event1);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent1, TestContext.Current.CancellationToken);
-
-        using var jsonContent2 = JsonContent.Create(event2);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent2, TestContext.Current.CancellationToken);
+        var created1 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), city1, "City1 Event"));
+        var created2 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), city2, "City2 Event"));
 
         // Clear auth for GET (public access)
         _client.DefaultRequestHeaders.Authorization = null;
@@ -129,16 +122,16 @@ public class OutputCacheTests
         // Verify City1 responses contain City1 event
         var content1a = await response1a.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         var content1b = await response1b.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
-        content1a!.Items.Should().Contain(e => e.Id == event1.Id, "City1 first request should contain City1 event");
-        content1b!.Items.Should().Contain(e => e.Id == event1.Id, "City1 cached request should contain City1 event");
-        content1a!.Items.Should().NotContain(e => e.Id == event2.Id, "City1 should not contain City2 event");
+        content1a!.Items.Should().Contain(e => e.Id == created1.Id, "City1 first request should contain City1 event");
+        content1b!.Items.Should().Contain(e => e.Id == created1.Id, "City1 cached request should contain City1 event");
+        content1a!.Items.Should().NotContain(e => e.Id == created2.Id, "City1 should not contain City2 event");
 
         // Verify City2 responses contain City2 event
         var content2a = await response2a.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         var content2b = await response2b.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
-        content2a!.Items.Should().Contain(e => e.Id == event2.Id, "City2 first request should contain City2 event");
-        content2b!.Items.Should().Contain(e => e.Id == event2.Id, "City2 cached request should contain City2 event");
-        content2a!.Items.Should().NotContain(e => e.Id == event1.Id, "City2 should not contain City1 event");
+        content2a!.Items.Should().Contain(e => e.Id == created2.Id, "City2 first request should contain City2 event");
+        content2b!.Items.Should().Contain(e => e.Id == created2.Id, "City2 cached request should contain City2 event");
+        content2a!.Items.Should().NotContain(e => e.Id == created1.Id, "City2 should not contain City1 event");
 
         // Verify cache hit via Age header (Output Cache adds Age header on cached responses)
         // First requests should NOT have Age header (cache miss)
@@ -158,32 +151,26 @@ public class OutputCacheTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // First, create an event
-        var event1 = CreateEventEntity(Guid.NewGuid(), uniqueCity, "CacheTest Event 1");
-        using var jsonContent = JsonContent.Create(event1);
-        var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
-        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        // First, create an event (server generates Id)
+        var created1 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), uniqueCity, "CacheTest Event 1"));
 
         // Get events (should include our event)
         var getResponse1 = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}", UriKind.Relative), TestContext.Current.CancellationToken);
         getResponse1.StatusCode.Should().Be(HttpStatusCode.OK);
         var result1 = await getResponse1.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         result1.Should().NotBeNull();
-        result1!.Items.Should().Contain(e => e.Id == event1.Id);
+        result1!.Items.Should().Contain(e => e.Id == created1.Id);
 
         // Post a second event (should invalidate cache)
-        var event2 = CreateEventEntity(Guid.NewGuid(), uniqueCity, "CacheTest Event 2");
-        using var jsonContent2 = JsonContent.Create(event2);
-        var postResponse2 = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent2, TestContext.Current.CancellationToken);
-        postResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
+        var created2 = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), uniqueCity, "CacheTest Event 2"));
 
         // Get events again (cache should be invalidated, should include both events)
         var getResponse2 = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}", UriKind.Relative), TestContext.Current.CancellationToken);
         getResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
         var result2 = await getResponse2.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
         result2.Should().NotBeNull();
-        result2!.Items.Should().Contain(e => e.Id == event1.Id);
-        result2.Items.Should().Contain(e => e.Id == event2.Id);
+        result2!.Items.Should().Contain(e => e.Id == created1.Id);
+        result2.Items.Should().Contain(e => e.Id == created2.Id);
     }
 
     [Fact]
@@ -194,26 +181,22 @@ public class OutputCacheTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // Create an event
-        var eventId = Guid.NewGuid();
-        var eventEntity = CreateEventEntity(eventId, uniqueCity, "ToBeDeleted");
-        using var jsonContent = JsonContent.Create(eventEntity);
-        var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
-        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        // Create an event (server generates Id)
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), uniqueCity, "ToBeDeleted"));
 
         // Get events (should include our event)
         var getResponse1 = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}", UriKind.Relative), TestContext.Current.CancellationToken);
         var result1 = await getResponse1.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
-        result1!.Items.Should().Contain(e => e.Id == eventId);
+        result1!.Items.Should().Contain(e => e.Id == createdEvent.Id);
 
         // Delete the event (should invalidate cache)
-        var deleteResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var deleteResponse = await _client.DeleteAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Get events again (cache should be invalidated, event should be gone)
         var getResponse2 = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}", UriKind.Relative), TestContext.Current.CancellationToken);
         var result2 = await getResponse2.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
-        result2!.Items.Should().NotContain(e => e.Id == eventId);
+        result2!.Items.Should().NotContain(e => e.Id == createdEvent.Id);
     }
 
     [Fact]
@@ -223,23 +206,20 @@ public class OutputCacheTests
         var token = TokenTool.Generate("demo-admin-uid");
         _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var eventId = Guid.NewGuid();
-        var eventEntity = CreateEventEntity(eventId, "CacheByIdTestCity", "CacheById Event");
-        using var jsonContent = JsonContent.Create(eventEntity);
-        await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
+        var createdEvent = await PostEventAsync(CreateEventEntity(Guid.NewGuid(), "CacheByIdTestCity", "CacheById Event"));
 
         // Clear auth for GET (public access)
         _client.DefaultRequestHeaders.Authorization = null;
 
         // Act - Measure first request (cache miss - hits Firestore)
         var stopwatch1 = System.Diagnostics.Stopwatch.StartNew();
-        var response1 = await _client.GetAsync(new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var response1 = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
         stopwatch1.Stop();
         var firstRequestMs = stopwatch1.ElapsedMilliseconds;
 
         // Measure second request (cache hit - should be faster)
         var stopwatch2 = System.Diagnostics.Stopwatch.StartNew();
-        var response2 = await _client.GetAsync(new Uri($"{ApiV1}/events/{eventId}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var response2 = await _client.GetAsync(new Uri($"{ApiV1}/events/{createdEvent.Id}", UriKind.Relative), TestContext.Current.CancellationToken);
         stopwatch2.Stop();
         var secondRequestMs = stopwatch2.ElapsedMilliseconds;
 
@@ -250,8 +230,8 @@ public class OutputCacheTests
         var content1 = await response1.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
         var content2 = await response2.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
 
-        content1!.Id.Should().Be(eventId);
-        content2!.Id.Should().Be(eventId);
+        content1!.Id.Should().Be(createdEvent.Id);
+        content2!.Id.Should().Be(createdEvent.Id);
 
         // Assert - Second request should be faster (cache hit)
         // Note: We use a soft assertion here because timing can vary in CI environments
@@ -259,6 +239,20 @@ public class OutputCacheTests
         secondRequestMs.Should().BeLessThanOrEqualTo(
             firstRequestMs,
             $"Cached response ({secondRequestMs}ms) should be faster than or equal to first request ({firstRequestMs}ms)");
+    }
+
+    /// <summary>
+    /// Posts an event to the single-create endpoint and returns the server-created EventEntity
+    /// (with server-generated Id and CreatedAt).
+    /// </summary>
+    private async Task<EventEntity> PostEventAsync(EventEntity source)
+    {
+        using var jsonContent = JsonContent.Create(source);
+        var postResponse = await _client.PostAsync(new Uri($"{ApiV1}/events", UriKind.Relative), jsonContent, TestContext.Current.CancellationToken);
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK, $"Failed to create event: {source.Name}");
+        var created = await postResponse.Content.ReadFromJsonAsync<EventEntity>(TestContext.Current.CancellationToken);
+        created.Should().NotBeNull();
+        return created!;
     }
 
     private static EventEntity CreateEventEntity(Guid id, string city, string name) => new()
@@ -285,7 +279,9 @@ public class OutputCacheTests
                 Street = "Test Street 1",
                 City = city,
                 Country = "PL",
-                PostalCode = "00-001"
+                PostalCode = "00-001",
+                Latitude = 52.2297,
+                Longitude = 21.0122
             }
         },
         Performer = new Organization
@@ -300,7 +296,9 @@ public class OutputCacheTests
                 Street = "Test Street 1",
                 City = city,
                 Country = "PL",
-                PostalCode = "00-001"
+                PostalCode = "00-001",
+                Latitude = 52.2297,
+                Longitude = 21.0122
             }
         },
         Offer = new Offer

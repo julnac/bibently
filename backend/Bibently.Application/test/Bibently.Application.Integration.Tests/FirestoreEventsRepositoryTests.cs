@@ -190,7 +190,9 @@ public class FirestoreEventsRepositoryTests(BibentlyWebApplicationFactory factor
             Street = "Test Street 1",
             City = city,
             Country = "PL",
-            PostalCode = "00-001"
+            PostalCode = "00-001",
+            Latitude = 52.2297,
+            Longitude = 21.0122
         };
 
         return new EventDocument
