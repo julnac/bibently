@@ -9,12 +9,15 @@ public class EventsService(IPrivateServerClient privateServerClient, IEventsRepo
 {
     public async Task<EventEntity> AddEvent(CreateEventEntityRequest request, CancellationToken token)
     {
-        var eventEntity = await privateServerClient.CreateEventAsync(request, token);
+        // todo: integrate with private server when ready, for now we directly write to the repository
+        // var eventEntity = await privateServerClient.CreateEventAsync(request, token);
 
-        var eventDocument = mapper.Map(eventEntity);
+        var eventDocument = mapper.Map(request);
+        eventDocument.CreatedAt = DateTime.UtcNow;
+        eventDocument.Id = Guid.NewGuid().ToString();
         await repository.InsertEvent(eventDocument, token);
 
-        return eventEntity;
+        return mapper.Map(eventDocument);
     }
 
     public async Task AddEvents(List<EventEntity> eventEntities, CancellationToken token)
