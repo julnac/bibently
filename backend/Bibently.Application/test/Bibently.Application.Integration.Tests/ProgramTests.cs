@@ -702,6 +702,42 @@ public class ProgramTests
         userDoc!.IsPremium.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task GivenEventsWithKeywords_WhenFilterByCommaSeparatedKeywords_ThenReturnsMatchingEvents()
+    {
+        // Arrange
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var event1 = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Tennis Match");
+        event1.Keywords = ["Sport", "Tennis"];
+        event1 = await PostEventAsync(event1);
+
+        var event2 = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Photo Exhibition");
+        event2.Keywords = ["Art", "Photography"];
+        event2 = await PostEventAsync(event2);
+
+        var event3 = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Coding Meetup");
+        event3.Keywords = ["Tech", "Coding"];
+        event3 = await PostEventAsync(event3);
+
+        // Act - Filter with comma-separated keywords "Tennis,Photography"
+        // This simulates how Scalar/Swagger UI sends array parameters or how a user might type them
+        var uri = $"{ApiV1}/events?keywords=Tennis,Photography";
+        var response = await _client.GetAsync(new Uri(uri, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        // Should find event1 (Tennis) and event2 (Photography), but NOT event3 (Coding)
+        // Note: The logic in FirestoreEventsRepository uses array-contains-any, so ANY match is sufficient.
+        result!.Items.Should().Contain(e => e.Id == event1.Id);
+        result.Items.Should().Contain(e => e.Id == event2.Id);
+        result.Items.Should().NotContain(e => e.Id == event3.Id);
+    }
+
     // --- Geolocation Filtering Tests ---
 
     [Fact]

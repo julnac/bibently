@@ -7,6 +7,7 @@
 using AutoFixture;
 using Google.Api.Gax;
 using Google.Cloud.Firestore;
+using Bibently.Application.Abstractions.Configuration;
 
 // Configuration
 var projectId = Environment.GetEnvironmentVariable("FIRESTORE_PROJECT_ID") ?? "demo-project";
@@ -87,28 +88,27 @@ public class EventGenerator
         ("Sopot", "PL", 54.4416, 18.5601)
     ];
 
-    private static readonly string[] EventTypes =
-        ["MusicEvent", "TheaterEvent", "SportsEvent", "Festival", "ComedyEvent", "DanceEvent", "ExhibitionEvent"];
+    private static readonly string[] EventTypes = CategoriesConfiguration.ValidValues.ToArray();
 
     private static readonly string[] Venues =
     [
-        "National Stadium", "City Arena", "Concert Hall", "Opera House", "Jazz Club",
-        "Rock Cafe", "Arts Center", "Sports Complex", "Theater Royal", "Open Air Stage",
-        "Underground Club", "Grand Ballroom", "Civic Center", "Memorial Hall", "Amphitheater"
+        "PGE Arena Gdańsk", "Ergo Arena", "Opera Leśna", "Teatr Muzyczny", "Stary Maneż",
+        "B90", "Filharmonia Bałtycka", "Teatr Szekspirowski", "Gdyńskie Centrum Filmowe", "Klub Parlament",
+        "Klub Żak", "Teatr Wybrzeże", "Sfinks700", "Ulica Elektryków", "100cznia"
     ];
 
     private static readonly (string Name, string Type)[] Performers =
     [
-        ("The Rolling Sounds", "MusicGroup"),
-        ("City Symphony Orchestra", "MusicGroup"),
-        ("Jazz Quartet Plus", "MusicGroup"),
-        ("Electronic Dreams", "MusicGroup"),
-        ("Royal Theater Company", "TheaterGroup"),
-        ("Comedy Stars", "PerformingGroup"),
-        ("Ballet Ensemble", "DanceGroup"),
-        ("Folk Traditions", "MusicGroup"),
-        ("Modern Dance Collective", "DanceGroup"),
-        ("Chamber Music Society", "MusicGroup")
+        ("Dawid Podsiadło", "MusicGroup"),
+        ("Sanah", "MusicGroup"),
+        ("Taco Hemingway", "MusicGroup"),
+        ("Kult", "MusicGroup"),
+        ("Teatr Muzyczny w Gdyni", "TheaterGroup"),
+        ("Stand-up Polska", "PerformingGroup"),
+        ("Polski Balet Narodowy", "DanceGroup"),
+        ("Kapela ze Wsi Warszawa", "MusicGroup"),
+        ("Teatr Dada von Bzdülöw", "DanceGroup"),
+        ("Orkiestra Kameralna Polskiego Radia Amadeus", "MusicGroup")
     ];
 
     private static readonly string[] EventNamePrefixes =
@@ -134,6 +134,30 @@ public class EventGenerator
     {
         ["PL"] = "PLN", ["GB"] = "GBP", ["US"] = "USD", ["JP"] = "JPY"
     };
+
+    private static readonly string[] Descriptions =
+    [
+        "Experience an unforgettable night of entertainment and culture. Join us for a unique performance that will leave you breathless.",
+        "A spectacular event showcasing the best talent in the region. Perfect for families and enthusiasts alike.",
+        "Don't miss this annual tradition! Usually a sell-out event, so grab your tickets early.",
+        "An exclusive gathering featuring special guests and unprecedented access to behind-the-scenes content.",
+        "Celebrate the season with this festive event. Great mood, amazing atmosphere, and memories to last a lifetime.",
+        "A cutting-edge display of modern creativity. Push the boundaries of your imagination.",
+        "Relive the classics with a modern twist. A nostalgic journey that resonates with all generations.",
+        "The city's biggest open-air event of the year. Food, fun, and fantastic performances.",
+        "Join the community for a day of excitement. Support local artists and enjoy the vibrant energy.",
+        "A masterclass in performance art. Critical acclaim and standing ovations guaranteed."
+    ];
+
+    private static readonly string[] Streets =
+    [
+        "Aleja Grunwaldzka", "ul. Świętojańska", "ul. Długa", "ul. Monte Cassino", "ul. Armii Krajowej",
+        "ul. Piwna", "ul. Chlebnicka", "ul. Mariacka", "ul. Szeroka", "ul. Grobla", "ul. Rajska",
+        "ul. Heweliusza", "ul. Korzenna", "ul. Kartuska", "ul. Słowackiego", "ul. Kościuszki",
+        "ul. Hallera", "ul. Mickiewicza", "ul. Wita Stwosza", "ul. Obrońców Wybrzeża", "ul. Chłopska",
+        "ul. Rzeczypospolitej", "ul. Pomorska", "ul. Gospody", "ul. Morska", "ul. Chylońska",
+        "ul. Wielkopolska", "ul. 10 Lutego", "ul. Władysława IV", "ul. Starowiejska", "ul. Portowa"
+    ];
 
     public EventGenerator()
     {
@@ -163,13 +187,14 @@ public class EventGenerator
             .ToList();
 
         var currency = CurrencyByCountry.GetValueOrDefault(city.Country, "EUR");
+        var description = Descriptions[index % Descriptions.Length];
 
         return new Dictionary<string, object>
         {
             ["id"] = id,
             ["type"] = eventType,
             ["name"] = $"{eventName} #{index + 1}",
-            ["description"] = _fixture.Create<string>(),
+            ["description"] = $"{description} - Featuring {performer.Name} at {venue}.",
             ["startDate"] = Timestamp.FromDateTime(startDate),
             ["endDate"] = Timestamp.FromDateTime(startDate.AddHours(2 + (index % 4))),
             ["datePublished"] = Timestamp.FromDateTime(now.AddDays(-(1 + (index % 30)))),
@@ -184,14 +209,14 @@ public class EventGenerator
             {
                 ["type"] = "Place",
                 ["name"] = venue,
-                ["address"] = CreateAddress($"{venue} Address", city)
+                ["address"] = CreateAddress(venue, city)
             },
             ["performer"] = new Dictionary<string, object>
             {
                 ["type"] = performer.Type,
                 ["name"] = performer.Name,
                 ["url"] = $"https://example.com/performers/{performer.Name.ToLower().Replace(" ", "-")}",
-                ["address"] = CreateAddress($"{performer.Name} HQ", city)
+                ["address"] = CreateAddress(performer.Name, city)
             },
             ["offer"] = new Dictionary<string, object>
             {
@@ -216,14 +241,17 @@ public class EventGenerator
         var latOffset = (_random.NextDouble() * 0.16) - jitterRange;
         var lngOffset = (_random.NextDouble() * 0.16) - jitterRange;
 
+        var streetName = Streets[_random.Next(Streets.Length)].Replace("ul. ", ""); // Removing prefix if present to handle formatting flexibly
+        var streetNumber = _random.Next(1, 200);
+
         return new Dictionary<string, object>
         {
             ["type"] = "PostalAddress",
             ["name"] = name,
-            ["street"] = _fixture.Create<string>(),
+            ["street"] = $"ul. {streetName} {streetNumber}",
             ["city"] = city.City,
             ["country"] = city.Country,
-            ["postalCode"] = _fixture.Create<string>(),
+            ["postalCode"] = $"{_random.Next(80, 81)}-{_random.Next(100, 999)}", // 80-xxx specifically for Tricity
             ["latitude"] = city.Lat + latOffset,
             ["longitude"] = city.Lng + lngOffset
         };

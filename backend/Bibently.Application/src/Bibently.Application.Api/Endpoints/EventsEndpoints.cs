@@ -12,7 +12,8 @@ public static class EventsEndpoints
     public static void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/events",
-            async ([AsParameters] FilterRequest filters,
+            // [AsParameters] is intentionally omitted for FilterRequest to enforce usage of its BindAsync method
+            async (FilterRequest filters,
                 [AsParameters] SortRequest sorting,
                 IEventsService svc,
                 CancellationToken token) =>

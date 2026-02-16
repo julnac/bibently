@@ -116,6 +116,7 @@ var apiV1 = app.MapGroup("/api/v1");
 EventsEndpoints.Map(apiV1);
 TrackingEndpoints.Map(apiV1);
 MeEndpoints.Map(apiV1);
+ConfigurationEndpoints.Map(apiV1);
 
 // === Utility Endpoints (non-versioned) ===
 UtilityEndpoints.Map(app);

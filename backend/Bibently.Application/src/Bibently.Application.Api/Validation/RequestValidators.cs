@@ -45,12 +45,12 @@ public class FilterRequestValidator : AbstractValidator<FilterRequest>
             .WithMessage("Start date cannot be after end date.");
 
         RuleFor(x => x.Keywords)
-            .Must(k => k == null || k.Count <= 20)
+            .Must(k => k is not { Length: > 20 })
             .WithMessage("Cannot filter by more than 20 keywords.");
 
         RuleForEach(x => x.Keywords)
             .MaximumLength(100).WithMessage("Each keyword cannot exceed 100 characters.")
-            .When(x => x.Keywords != null && x.Keywords.Count != 0);
+            .When(x => x.Keywords != null && x.Keywords.Length != 0);
     }
 }
 

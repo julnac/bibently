@@ -54,7 +54,7 @@ public class FirestoreEventsRepository : IEventsRepository
                 if (!string.IsNullOrEmpty(filters.Category))
                     query = query.WhereEqualTo("type", filters.Category);
 
-                if (filters.Keywords != null && filters.Keywords.Count != 0)
+                if (filters.Keywords != null && filters.Keywords.Length != 0)
                     query = query.WhereArrayContainsAny("keywords", filters.Keywords);
 
                 // Geo bounding box pre-filter

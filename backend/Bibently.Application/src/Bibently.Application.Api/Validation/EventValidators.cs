@@ -7,6 +7,7 @@
 namespace Bibently.Application.Api.Validation;
 
 using Bibently.Application.Abstractions.Models;
+using Bibently.Application.Abstractions.Configuration;
 using FluentValidation;
 
 /// <summary>
@@ -129,13 +130,7 @@ public class OfferValidator : AbstractValidator<Offer>
 /// </summary>
 public class EventEntityValidator : AbstractValidator<EventEntity>
 {
-    private static readonly HashSet<string> ValidEventCategories = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Event", "MusicEvent", "TheaterEvent", "SportsEvent", "BusinessEvent",
-        "EducationEvent", "ExhibitionEvent", "Festival", "SocialEvent", "DanceEvent",
-        "ComedyEvent", "ChildrensEvent", "LiteraryEvent", "ScreeningEvent", "FoodEvent"
-    };
-
+    private static readonly HashSet<string> ValidEventCategories = CategoriesConfiguration.ValidValues;
     private static readonly HashSet<string> ValidEventStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
         "EventScheduled", "EventCancelled", "EventPostponed", "EventRescheduled", "EventMovedOnline"
@@ -243,12 +238,7 @@ public class EventEntityValidator : AbstractValidator<EventEntity>
 /// </summary>
 public class CreateEventEntityRequestValidator : AbstractValidator<CreateEventEntityRequest>
 {
-    private static readonly HashSet<string> ValidEventCategories = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Event", "MusicEvent", "TheaterEvent", "SportsEvent", "BusinessEvent",
-        "EducationEvent", "ExhibitionEvent", "Festival", "SocialEvent", "DanceEvent",
-        "ComedyEvent", "ChildrensEvent", "LiteraryEvent", "ScreeningEvent", "FoodEvent"
-    };
+    private static readonly HashSet<string> ValidEventCategories = CategoriesConfiguration.ValidValues;
 
     private static readonly HashSet<string> ValidEventStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
