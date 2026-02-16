@@ -24,9 +24,9 @@ public class FilterRequestValidator : AbstractValidator<FilterRequest>
             .MaximumLength(300).WithMessage("Name filter cannot exceed 300 characters.")
             .When(x => !string.IsNullOrEmpty(x.Name));
 
-        RuleFor(x => x.Type)
-            .MaximumLength(50).WithMessage("Type filter cannot exceed 50 characters.")
-            .When(x => !string.IsNullOrEmpty(x.Type));
+        RuleFor(x => x.Category)
+            .MaximumLength(50).WithMessage("Category filter cannot exceed 50 characters.")
+            .When(x => !string.IsNullOrEmpty(x.Category));
 
         RuleFor(x => x.MinPrice)
             .GreaterThanOrEqualTo(0).WithMessage("Minimum price cannot be negative.")

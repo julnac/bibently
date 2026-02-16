@@ -3,7 +3,7 @@ namespace Bibently.Application.Abstractions.Models;
 public class EventEntity
 {
     public required Guid Id { get; set; }
-    public required string Type { get; set; }
+    public required string Category { get; set; }
     public required string Name { get; set; }
     public required string Description { get; set; }
     public string? ArticleBody { get; set; }

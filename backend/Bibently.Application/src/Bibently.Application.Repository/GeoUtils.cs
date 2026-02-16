@@ -1,0 +1,38 @@
+namespace Bibently.Application.Repository;
+
+public static class GeoUtils
+{
+    private const double EarthRadiusKm = 6371.0;
+
+    /// <summary>
+    /// Calculates the distance in kilometers between two lat/lng points
+    /// using the Haversine formula.
+    /// </summary>
+    public static double DistanceKm(double lat1, double lng1, double lat2, double lng2)
+    {
+        var dLat = DegreesToRadians(lat2 - lat1);
+        var dLng = DegreesToRadians(lng2 - lng1);
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return EarthRadiusKm * c;
+    }
+
+    /// <summary>
+    /// Computes a lat/lng bounding box for a given center + radius (km).
+    /// Returns (minLat, maxLat, minLng, maxLng).
+    /// </summary>
+    public static (double MinLat, double MaxLat, double MinLng, double MaxLng) BoundingBox(
+        double lat, double lng, double radiusKm)
+    {
+        var latDelta = radiusKm / EarthRadiusKm * (180.0 / Math.PI);
+        var lngDelta = latDelta / Math.Cos(DegreesToRadians(lat));
+
+        return (lat - latDelta, lat + latDelta, lng - lngDelta, lng + lngDelta);
+    }
+
+    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
+}

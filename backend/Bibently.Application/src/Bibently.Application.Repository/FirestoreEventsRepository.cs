@@ -27,6 +27,9 @@ public class FirestoreEventsRepository : IEventsRepository
 
             // Apply filters
             var filters = searchRequest.Filters;
+            bool isGeoFiltering = false;
+            double centerLat = 0, centerLng = 0, radiusKm = 10;
+
             if (filters != null)
             {
                 if (!string.IsNullOrEmpty(filters.City))
@@ -48,11 +51,28 @@ public class FirestoreEventsRepository : IEventsRepository
                 if (filters.MaxPrice.HasValue)
                     query = query.WhereLessThanOrEqualTo("offer.price", filters.MaxPrice.Value);
 
-                if (!string.IsNullOrEmpty(filters.Type))
-                    query = query.WhereEqualTo("type", filters.Type);
+                if (!string.IsNullOrEmpty(filters.Category))
+                    query = query.WhereEqualTo("type", filters.Category);
 
                 if (filters.Keywords != null && filters.Keywords.Count != 0)
                     query = query.WhereArrayContainsAny("keywords", filters.Keywords);
+
+                // Geo bounding box pre-filter
+                if (filters is { Latitude: not null, Longitude: not null })
+                {
+                    isGeoFiltering = true;
+                    centerLat = filters.Latitude.Value;
+                    centerLng = filters.Longitude.Value;
+                    radiusKm = filters.RadiusKm ?? 10;
+
+                    var (minLat, maxLat, minLng, maxLng) = GeoUtils.BoundingBox(centerLat, centerLng, radiusKm);
+
+                    query = query
+                        .WhereGreaterThanOrEqualTo("location.address.latitude", minLat)
+                        .WhereLessThanOrEqualTo("location.address.latitude", maxLat)
+                        .WhereGreaterThanOrEqualTo("location.address.longitude", minLng)
+                        .WhereLessThanOrEqualTo("location.address.longitude", maxLng);
+                }
             }
 
             // Apply sorting
@@ -71,12 +91,13 @@ public class FirestoreEventsRepository : IEventsRepository
 
             query = isAscending ? query.OrderBy(sortField) : query.OrderByDescending(sortField);
 
-            // Apply pagination
-            query = query.Limit(sorting.PageSize.HasValue && sorting.PageSize > 0 ? sorting.PageSize.Value : 20);
+            // Apply pagination — over-fetch when geo-filtering since Haversine will remove some
+            var pageSize = sorting.PageSize.HasValue && sorting.PageSize > 0 ? sorting.PageSize.Value : 20;
+            var fetchLimit = isGeoFiltering ? pageSize * 2 : pageSize;
+            query = query.Limit(fetchLimit);
 
             if (!string.IsNullOrEmpty(sorting.PageToken))
             {
-                // Simple pagination: the token is the last document's ID
                 DocumentReference lastDocRef = _db.Collection(CollectionPath).Document(sorting.PageToken);
                 DocumentSnapshot lastDocSnapshot = await lastDocRef.GetSnapshotAsync(ct);
                 if (lastDocSnapshot.Exists)
@@ -88,8 +109,19 @@ public class FirestoreEventsRepository : IEventsRepository
             QuerySnapshot snapshot = await query.GetSnapshotAsync(ct);
             var items = snapshot.Documents.Select(doc => doc.ConvertTo<EventDocument>()).ToList();
 
+            // Haversine post-filter: bounding box is a square, but radius is a circle
+            if (isGeoFiltering)
+            {
+                items = items
+                    .Where(e => GeoUtils.DistanceKm(
+                        centerLat, centerLng,
+                        e.Location.Address.Latitude.GetValueOrDefault(),
+                        e.Location.Address.Longitude.GetValueOrDefault()) <= radiusKm)
+                    .Take(pageSize)
+                    .ToList();
+            }
+
             string? nextPageToken = null;
-            var pageSize = sorting.PageSize.HasValue && sorting.PageSize > 0 ? sorting.PageSize.Value : 20;
             if (items.Count > 0 && items.Count == pageSize)
             {
                 nextPageToken = items[^1].Id;

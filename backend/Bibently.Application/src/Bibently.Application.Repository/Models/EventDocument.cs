@@ -8,8 +8,8 @@ public class EventDocument
     [FirestoreProperty("id")]
     public string Id { get; set; } = string.Empty;
 
-    [FirestoreProperty("type")]
-    public required string Type { get; set; }
+    [FirestoreProperty("category")]
+    public required string Category { get; set; }
 
     [FirestoreProperty("name")]
     public required string Name { get; set; }

@@ -58,7 +58,7 @@ try
     Console.WriteLine($"✨ Successfully seeded {events.Count} events!");
     Console.WriteLine();
     Console.WriteLine("Sample queries to test:");
-    Console.WriteLine("  - Filter by city: ?city=Warsaw, ?city=Krakow, ?city=London, ?city=Berlin, ?city=Paris");
+    Console.WriteLine("  - Filter by city: ?city=Gdańsk, ?city=Gdynia, ?city=Sopot");
     Console.WriteLine("  - Filter by type: ?type=MusicEvent, ?type=TheaterEvent, ?type=SportsEvent");
     Console.WriteLine("  - Filter by price: ?minPrice=50&maxPrice=150");
     Console.WriteLine("  - Filter by keywords: ?keywords=Rock, ?keywords=Jazz, ?keywords=Classical");
@@ -82,16 +82,9 @@ public class EventGenerator
 
     private static readonly (string City, string Country, double Lat, double Lng)[] Cities =
     [
-        ("Warsaw", "PL", 52.2297, 21.0122),
-        ("Krakow", "PL", 50.0647, 19.9450),
-        ("London", "GB", 51.5074, -0.1278),
-        ("Berlin", "DE", 52.5200, 13.4050),
-        ("Paris", "FR", 48.8566, 2.3522),
-        ("New York", "US", 40.7128, -74.0060),
-        ("Tokyo", "JP", 35.6762, 139.6503),
-        ("Amsterdam", "NL", 52.3676, 4.9041),
-        ("Prague", "CZ", 50.0755, 14.4378),
-        ("Vienna", "AT", 48.2082, 16.3738)
+        ("Gdańsk", "PL", 54.3520, 18.6466),
+        ("Gdynia", "PL", 54.5189, 18.5305),
+        ("Sopot", "PL", 54.4416, 18.5601)
     ];
 
     private static readonly string[] EventTypes =
@@ -211,10 +204,18 @@ public class EventGenerator
         };
     }
 
+    private readonly Random _random = new();
+
     private Dictionary<string, object> CreateAddress(
         string name,
         (string City, string Country, double Lat, double Lng) city)
     {
+        // Add random jitter to coordinates so they aren't all exactly at city center
+        // +/- 0.05 degrees is roughly +/- 5.5km
+        const float jitterRange = 0.08f;
+        var latOffset = (_random.NextDouble() * 0.16) - jitterRange;
+        var lngOffset = (_random.NextDouble() * 0.16) - jitterRange;
+
         return new Dictionary<string, object>
         {
             ["type"] = "PostalAddress",
@@ -223,8 +224,8 @@ public class EventGenerator
             ["city"] = city.City,
             ["country"] = city.Country,
             ["postalCode"] = _fixture.Create<string>(),
-            ["latitude"] = city.Lat,
-            ["longitude"] = city.Lng
+            ["latitude"] = city.Lat + latOffset,
+            ["longitude"] = city.Lng + lngOffset
         };
     }
 }

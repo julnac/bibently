@@ -37,7 +37,7 @@ public class PrivateServerClientTests
         result.Should().NotBeNull();
         result.Id.Should().Be(expectedEvent.Id);
         result.Name.Should().Be(expectedEvent.Name);
-        result.Type.Should().Be(expectedEvent.Type);
+        result.Category.Should().Be(expectedEvent.Category);
         result.CreatedAt.Should().BeCloseTo(expectedEvent.CreatedAt, TimeSpan.FromSeconds(1));
 
         handler.LastRequest.Should().NotBeNull();
@@ -149,7 +149,7 @@ public class PrivateServerClientTests
 
     private static CreateEventEntityRequest CreateSampleRequest() => new()
     {
-        Type = "MusicEvent",
+        Category = "MusicEvent",
         Name = "Test Concert",
         Description = "A test concert",
         StartDate = DateTime.UtcNow.AddDays(1),
@@ -184,7 +184,7 @@ public class PrivateServerClientTests
     private static EventEntity CreateSampleEventEntity() => new()
     {
         Id = Guid.NewGuid(),
-        Type = "MusicEvent",
+        Category = "MusicEvent",
         Name = "Test Concert",
         Description = "A test concert",
         StartDate = DateTime.UtcNow.AddDays(1),

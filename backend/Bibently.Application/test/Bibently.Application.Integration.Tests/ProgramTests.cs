@@ -258,7 +258,7 @@ public class ProgramTests
         var invalidEvent = new EventEntity
         {
             Id = Guid.NewGuid(),
-            Type = "InvalidEventType", // Invalid event type
+            Category = "InvalidEventType", // Invalid event type
             Name = "", // Empty name - validation should fail
             Description = "Test",
             StartDate = DateTime.UtcNow.AddDays(1),
@@ -702,7 +702,122 @@ public class ProgramTests
         userDoc!.IsPremium.Should().BeTrue();
     }
 
-    /// <summary>
+    // --- Geolocation Filtering Tests ---
+
+    [Fact]
+    public async Task GivenEventsAtDifferentDistances_WhenFilterByRadius_ThenReturnsOnlyEventsInRadius()
+    {
+        // Arrange
+        var token = TokenTool.Generate("admin-geo-test");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Center point: 52.00, 21.00
+        double centerLat = 52.00;
+        double centerLng = 21.00;
+
+        // Event A: ~5km North (52.045, 21.00)
+        var sourceA = CreateEventEntity(Guid.NewGuid(), "LocA", "Inside Radius", 52.045, 21.00);
+        var eventInside = await PostEventAsync(sourceA);
+
+        // Event B: ~15km North (52.135, 21.00)
+        var sourceB = CreateEventEntity(Guid.NewGuid(), "LocB", "Outside Radius", 52.135, 21.00);
+        var eventOutside = await PostEventAsync(sourceB);
+
+        // Act - Filter with 10km radius
+        var uri = $"{ApiV1}/events?latitude={centerLat}&longitude={centerLng}&radiusKm=10";
+
+        var response = await _client.GetAsync(new Uri(uri, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+
+        result!.Items.Should().Contain(e => e.Id == eventInside.Id);
+        result.Items.Should().NotContain(e => e.Id == eventOutside.Id);
+    }
+
+    [Fact]
+    public async Task GivenEventsInDifferentCities_WhenFilterByGeo_ThenReturnsCorrectCityEvent()
+    {
+        // Arrange
+        var token = TokenTool.Generate("admin-geo-city-test");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Warsaw Event (52.2297, 21.0122)
+        var sourceWarsaw = CreateEventEntity(Guid.NewGuid(), "Warsaw", "Warsaw Event", 52.2297, 21.0122);
+        var warsawEvent = await PostEventAsync(sourceWarsaw);
+
+        // Gdańsk Event (54.3520, 18.6466)
+        var sourceGdansk = CreateEventEntity(Guid.NewGuid(), "Gdańsk", "Gdańsk Event", 54.3520, 18.6466);
+        var gdanskEvent = await PostEventAsync(sourceGdansk);
+
+        // Act - Filter around Warsaw (5km radius)
+        var uri = $"{ApiV1}/events?latitude=52.2297&longitude=21.0122&radiusKm=5";
+        var response = await _client.GetAsync(new Uri(uri, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Items.Should().Contain(e => e.Id == warsawEvent.Id);
+        result.Items.Should().NotContain(e => e.Id == gdanskEvent.Id);
+    }
+
+    [Fact]
+    public async Task GivenEventWithinDefaultRadius_WhenFilterWithoutRadius_ThenUsesDefault10Km()
+    {
+        // Arrange - Default radius is 10km
+        var token = TokenTool.Generate("admin-geo-default-test");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        double centerLat = 52.00;
+        double centerLng = 21.00;
+
+        // Event ~5km away (inside default 10km)
+        var sourceInside = CreateEventEntity(Guid.NewGuid(), "LocDefault", "Inside Default Radius", 52.045, 21.00);
+        var eventInside = await PostEventAsync(sourceInside);
+
+        // Act - Filter with lat/lng only (no radiusKm)
+        var uri = $"{ApiV1}/events?latitude={centerLat}&longitude={centerLng}";
+        var response = await _client.GetAsync(new Uri(uri, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Items.Should().Contain(e => e.Id == eventInside.Id);
+    }
+
+    private static EventEntity CreateEventEntity(Guid id, string city, string name, double lat, double lng)
+    {
+        var entity = CreateEventEntity(id, city, name);
+
+        // Re-create the Location/Address with custom coordinates since they are init-only
+        var newAddress = new Address
+        {
+            Type = "PostalAddress",
+            Name = "Test Address",
+            Street = "Test Street 1",
+            City = city,
+            Country = "PL",
+            PostalCode = "00-001",
+            Latitude = lat,
+            Longitude = lng
+        };
+
+        entity.Location = new Location
+        {
+            Type = "Place",
+            Name = "Test Venue",
+            Address = newAddress
+        };
+
+        return entity;
+    }
     /// Posts an event to the single-create endpoint and returns the server-created EventEntity
     /// (with server-generated Id and CreatedAt).
     /// </summary>
@@ -733,7 +848,7 @@ public class ProgramTests
         return new EventEntity
         {
             Id = id,
-            Type = "MusicEvent",
+            Category = "MusicEvent",
             Name = name,
             Description = "A test concert description",
             StartDate = DateTime.UtcNow.AddDays(1),

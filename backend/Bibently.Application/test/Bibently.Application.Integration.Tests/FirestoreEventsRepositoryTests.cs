@@ -68,15 +68,15 @@ public class FirestoreEventsRepositoryTests(BibentlyWebApplicationFactory factor
         var uniqueRunId = Guid.NewGuid().ToString("N");
         var events = new List<EventDocument>();
 
-        // City Warsaw, Price 100, Type Music, Date +2d, Keywords: Rock
+        // City Warsaw, Price 100, Category Music, Date +2d, Keywords: Rock
         events.Add(CreateEventDocument(Guid.NewGuid(), "Warsaw", uniqueRunId + "_Concert_A", 100, "MusicEvent", DateTime.UtcNow.AddDays(2), ["Rock"]));
-        // City Warsaw, Price 200, Type Music, Date +3d, Keywords: Jazz
+        // City Warsaw, Price 200, Category Music, Date +3d, Keywords: Jazz
         events.Add(CreateEventDocument(Guid.NewGuid(), "Warsaw", uniqueRunId + "_Concert_B", 200, "MusicEvent", DateTime.UtcNow.AddDays(3), ["Jazz"]));
-        // City Krakow, Price 100, Type Theater, Date +1d, Keywords: Drama
+        // City Krakow, Price 100, Category Theater, Date +1d, Keywords: Drama
         events.Add(CreateEventDocument(Guid.NewGuid(), "Krakow", uniqueRunId + "_Play_A", 100, "TheaterEvent", DateTime.UtcNow.AddDays(1), ["Drama"]));
-        // City London, Price 500, Type Music, Date +5d, Keywords: Rock, Pop
+        // City London, Price 500, Category Music, Date +5d, Keywords: Rock, Pop
         events.Add(CreateEventDocument(Guid.NewGuid(), "London", uniqueRunId + "_Festival_A", 500, "MusicEvent", DateTime.UtcNow.AddDays(5), ["Rock", "Pop"]));
-        // City Warsaw, Price 50, Type Music, Date +10d, Keywords: Rock
+        // City Warsaw, Price 50, Category Music, Date +10d, Keywords: Rock
         events.Add(CreateEventDocument(Guid.NewGuid(), "Warsaw", uniqueRunId + "_Gig_A", 50, "MusicEvent", DateTime.UtcNow.AddDays(10), ["Rock"]));
 
         await _repository.InsertEvents(events, TestContext.Current.CancellationToken);
@@ -100,8 +100,8 @@ public class FirestoreEventsRepositoryTests(BibentlyWebApplicationFactory factor
         items3.Should().HaveCount(1);
         items3.First().Name.Should().Contain("Concert_B");
 
-        // Test Case 4: Combined Filter (City + Type)
-        var search4 = new SearchRequest { Filters = new FilterRequest { City = "Warsaw", Type = "MusicEvent", Name = uniqueRunId } };
+        // Test Case 4: Combined Filter (City + Category)
+        var search4 = new SearchRequest { Filters = new FilterRequest { City = "Warsaw", Category = "MusicEvent", Name = uniqueRunId } };
         var (items4, _) = await _repository.GetEvents(search4, TestContext.Current.CancellationToken);
         items4.Should().HaveCount(3);
 
@@ -198,7 +198,7 @@ public class FirestoreEventsRepositoryTests(BibentlyWebApplicationFactory factor
         return new EventDocument
         {
             Id = id.ToString(),
-            Type = type,
+            Category = type,
             Name = name,
             Description = "A test concert description",
             StartDate = startDate?.ToUniversalTime() ?? DateTime.UtcNow.AddDays(1),

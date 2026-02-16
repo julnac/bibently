@@ -34,7 +34,7 @@ public class BibentlyWebApplicationFactory : WebApplicationFactory<IApiMarker>
             var eventEntity = new EventEntity
             {
                 Id = Guid.NewGuid(),
-                Type = request.Type,
+                Category = request.Category,
                 Name = request.Name,
                 Description = request.Description,
                 ArticleBody = request.ArticleBody,

@@ -261,7 +261,7 @@ public class OutputCacheTests
         Name = name,
         Description = "A test event for cache testing",
         StartDate = DateTime.UtcNow.AddDays(1),
-        Type = "MusicEvent",
+        Category = "MusicEvent",
         EventStatus = "EventScheduled",
         AttendanceMode = "OfflineEventAttendanceMode",
         Provider = "TestProvider",

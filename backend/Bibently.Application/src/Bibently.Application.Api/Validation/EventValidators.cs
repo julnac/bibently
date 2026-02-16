@@ -129,7 +129,7 @@ public class OfferValidator : AbstractValidator<Offer>
 /// </summary>
 public class EventEntityValidator : AbstractValidator<EventEntity>
 {
-    private static readonly HashSet<string> ValidEventTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ValidEventCategories = new(StringComparer.OrdinalIgnoreCase)
     {
         "Event", "MusicEvent", "TheaterEvent", "SportsEvent", "BusinessEvent",
         "EducationEvent", "ExhibitionEvent", "Festival", "SocialEvent", "DanceEvent",
@@ -151,10 +151,10 @@ public class EventEntityValidator : AbstractValidator<EventEntity>
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage("Event ID is required.");
 
-        RuleFor(x => x.Type)
+        RuleFor(x => x.Category)
             .NotEmpty().WithMessage("Event type is required.")
-            .Must(t => ValidEventTypes.Contains(t))
-            .WithMessage($"Event type must be one of: {string.Join(", ", ValidEventTypes)}");
+            .Must(t => ValidEventCategories.Contains(t))
+            .WithMessage($"Event type must be one of: {string.Join(", ", ValidEventCategories)}");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Event name is required.")
@@ -243,7 +243,7 @@ public class EventEntityValidator : AbstractValidator<EventEntity>
 /// </summary>
 public class CreateEventEntityRequestValidator : AbstractValidator<CreateEventEntityRequest>
 {
-    private static readonly HashSet<string> ValidEventTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ValidEventCategories = new(StringComparer.OrdinalIgnoreCase)
     {
         "Event", "MusicEvent", "TheaterEvent", "SportsEvent", "BusinessEvent",
         "EducationEvent", "ExhibitionEvent", "Festival", "SocialEvent", "DanceEvent",
@@ -262,10 +262,10 @@ public class CreateEventEntityRequestValidator : AbstractValidator<CreateEventEn
 
     public CreateEventEntityRequestValidator()
     {
-        RuleFor(x => x.Type)
+        RuleFor(x => x.Category)
             .NotEmpty().WithMessage("Event type is required.")
-            .Must(t => ValidEventTypes.Contains(t))
-            .WithMessage($"Event type must be one of: {string.Join(", ", ValidEventTypes)}");
+            .Must(t => ValidEventCategories.Contains(t))
+            .WithMessage($"Event type must be one of: {string.Join(", ", ValidEventCategories)}");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Event name is required.")
