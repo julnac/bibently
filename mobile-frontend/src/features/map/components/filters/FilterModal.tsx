@@ -24,7 +24,7 @@ const FilterModal = ({ type, isVisible, onClose }: FilterModalProps) => {
     max: filters.MaxPrice ?? null,
   });
 
-  const [selectedCat, setSelectedCat] = useState<string | undefined>(filters.Type);
+  const [selectedCat, setSelectedCat] = useState<string | undefined>(filters.Category);
 
   const handleApply = () => {
     switch (type) {

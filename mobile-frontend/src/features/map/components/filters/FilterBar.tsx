@@ -3,6 +3,7 @@ import { useState } from "react";
 import FilterButton from "./FilterButton";
 import FilterModal from "./FilterModal";
 import { useFilterStore } from "@/src/core/store/useFilterStore";
+import { FilterBarSort } from './FilterBarSort';
 
 type FilterType = 'category' | 'date' | 'price' | null;
 
@@ -15,7 +16,7 @@ const FilterBar = () => {
 
   const isFilterSet = (type: FilterType) => {
     switch (type) {
-      case 'category': return !!filters.Type;
+      case 'category': return !!filters.Category;
       case 'date': return !!filters.StartDate;
       case 'price': return filters.MinPrice !== undefined || filters.MaxPrice !== undefined;
       default: return false;
@@ -29,6 +30,8 @@ const FilterBar = () => {
         showsHorizontalScrollIndicator={false} 
         contentContainerStyle={styles.bar}
       >
+        <FilterBarSort/>
+
         <FilterButton 
           label="Kategoria" 
           onPress={() => openFilter('category')} 
@@ -47,6 +50,7 @@ const FilterBar = () => {
           isActive={activeFilter === 'price'} 
           isSet={isFilterSet('price')}
         />
+
       </ScrollView>
 
       {activeFilter && (
@@ -68,7 +72,8 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     paddingHorizontal: 16, 
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    // justifyContent: 'flex-start',
     gap: 8, 
   }
 });

@@ -152,7 +152,7 @@ const EventEntry = () => {
           <View className="flex-row justify-between items-start">
              <View className="flex-1">
                 <Text className="text-xs text-primary font-bold uppercase mb-1">
-                    {event.type.replace('Event', '')}
+                    {event.category?.replace('Event', '')}
                 </Text>
                 <Text className="text-3xl font-black text-gray-900 leading-tight">
                     {event.name}

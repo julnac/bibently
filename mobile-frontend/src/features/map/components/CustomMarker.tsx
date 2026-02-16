@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Marker } from "react-native-maps";
 import { EventEntity } from "@/core/types/event.types";
-import { generateGdanskCoordinates } from "@/features/events/adapters/eventAdapter";
+// import { generateGdanskCoordinates } from "@/features/events/adapters/eventAdapter";
 
 interface CustomMarkerProps {
   event: EventEntity;
@@ -12,6 +12,9 @@ interface CustomMarkerProps {
 
 export const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) => {
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  const lat = event?.location?.address?.latitude;
+  const lng = event?.location?.address?.longitude;
 
   useEffect(() => {
     // Allow initial render, then stop tracking to prevent flickering
@@ -32,9 +35,16 @@ export const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) 
     return () => clearTimeout(timeout);
   }, [isSelected]);
 
+  if (!lat || !lng) {
+    return
+  }
+
   return (
     <Marker
-      coordinate={generateGdanskCoordinates()}
+      coordinate={{
+          latitude: lat,
+          longitude: lng,
+      }}
       onPress={onPress}
       tracksViewChanges={tracksViewChanges}
     >

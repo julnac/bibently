@@ -15,15 +15,14 @@ export default function UniversalMap({ events, onMarkerPress, selectedEventId }:
       if (selectedEventId && events) {
         const selectedEvent = events.find((e: EventEntity) => e.id === selectedEventId);
 
-        // const lat = selectedEvent?.location?.address?.latitude;
-        // const lng = selectedEvent?.location?.address?.longitude;
-        const coords = selectedEvent?.location?.address;
+        const lat = selectedEvent?.location?.address?.latitude;
+        const lng = selectedEvent?.location?.address?.longitude;
         console.log("Mapa centruje na:", selectedEvent?.name);
         
-        if (coords?.latitude && coords?.longitude) {
+        if (lat && lng) {
           mapRef.current?.animateToRegion({
-            latitude: selectedEvent.latitude - 0.005, // Lekki offset w dół, żeby karta eventu nie zasłaniała markera
-            longitude: selectedEvent.longitude,
+            latitude: lat,
+            longitude: lng,
             latitudeDelta: 0.02,
             longitudeDelta: 0.02,
           }, 1000); // 1000ms = płynna animacja

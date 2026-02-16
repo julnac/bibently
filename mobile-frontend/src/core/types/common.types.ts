@@ -6,6 +6,8 @@ export interface Address {
   country: string;
   postalCode?: string | null;
   rawAddressString?: string | null;
+  longitude?: number;
+  latitude?: number;
 }
 
 export interface Location {

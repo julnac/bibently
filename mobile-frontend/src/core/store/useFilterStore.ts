@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { EventQueryParams } from '../types/event.params';
+import { SortDirection } from '@/src/core/types/api.types';
+import {EventSortableAccessor} from '@/src/core/types/event.types';
 
 interface FilterState {
   filters: EventQueryParams;
@@ -9,6 +11,7 @@ interface FilterState {
   setCategory: (type: string | undefined) => void;
   setCity: (city: string) => void;
   resetFilters: () => void;
+  setSorting: (key: EventSortableAccessor, order: SortDirection) => void;
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
@@ -53,4 +56,13 @@ export const useFilterStore = create<FilterState>((set) => ({
   resetFilters: () => set({
     filters: { City: 'Gdańsk', PageSize: 20 }
   }),
+
+  setSorting: (key: EventSortableAccessor, order: SortDirection) => set((state) => ({
+    filters: {
+      ...state.filters,
+      SortKey: key,
+      Order: order,
+      PageToken: undefined,
+    }
+  })),
 }));

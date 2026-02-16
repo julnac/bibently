@@ -8,7 +8,10 @@ export interface EventQueryParams {
   EndDate?: string;
   MinPrice?: number;
   MaxPrice?: number;
-  Type?: string;
+  Category?: string;
+  Latitude?: number | string;
+  Longitude?: number | string;
+  RadiusKm?: number;
   Keywords?: string[];
   SortKey?: EventSortableAccessor;
   Order?: SortDirection;

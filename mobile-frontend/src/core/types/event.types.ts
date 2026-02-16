@@ -14,7 +14,7 @@ export interface Offer {
 
 export interface EventEntity {
   id: string; // uuid
-  type: string;
+  category: string;
   name: string;
   description: string;
   articleBody?: string | null;
