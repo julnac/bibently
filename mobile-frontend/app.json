@@ -24,7 +24,8 @@
         "googleMaps": {
           "apiKey": "GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "androidNavigationBar": { "visible": true }
     },
     "web": {
       "bundler": "metro",

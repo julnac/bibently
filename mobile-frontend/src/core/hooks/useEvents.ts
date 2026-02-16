@@ -1,54 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { eventService } from '../services/events.service';
-import { EventEntity } from '../types/event.types';
 import { EventQueryParams } from '../types/event.params';
+import { EventEntity } from '../types/event.types';
+import { ApiPaginationResponse } from '../types/api.types';
 
-export const useEvents = (initialParams?: EventQueryParams) => {
-  const [events, setEvents] = useState<EventEntity[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [nextToken, setNextToken] = useState<string | null>(null);
-
-  const fetchEvents = useCallback(async (params?: EventQueryParams) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await eventService.getEvents(params);
-      
-      setEvents(data.items || []);
-      setNextToken(data.nextPageToken || null);
-    } catch (err: any) {
-      setError(err.message || 'Wystąpił błąd podczas pobierania wydarzeń');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadMore = async () => {
-    if (loadingMore || !nextToken) return;
-
-    try {
-      setLoadingMore(true);
-      const data = await eventService.getEvents({
-        ...initialParams,
-        PageToken: nextToken // Wysyłamy token otrzymany z poprzedniego zapytania
-      });
-
-      if (data.items) {
-        setEvents(prev => [...prev, ...data.items!]); // Doklejamy nowe elementy
-      }
-      setNextToken(data.nextPageToken || null);
-    } catch (err) {
-      console.error("Błąd podczas ładowania kolejnej strony:", err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEvents(initialParams);
-  }, [fetchEvents]);
-
-  return { events, loading, loadMore, error, nextToken, refresh: () => fetchEvents(initialParams) };
+export const useEvents = (filters: EventQueryParams) => {
+  return useInfiniteQuery<
+    ApiPaginationResponse, // Typ danych z pojedynczej strony API
+    Error,                 // Typ błędu
+    EventEntity[],         // Typ po transformacji (select)
+    [string, EventQueryParams], // Typ klucza zapytania
+    string | undefined     // TYP NASZEGO TOKENA (PageParam) - to rozwiązuje błąd
+  >({
+    queryKey: ['events', filters],
+    queryFn: ({ pageParam }) => 
+      eventService.getEvents({ 
+        ...filters, 
+        PageToken: pageParam 
+      }),
+    initialPageParam: undefined, 
+    getNextPageParam: (lastPage) => {
+      return lastPage.nextPageToken || undefined;
+    },
+    select: (data) => data.pages.flatMap((page) => page.items || []),
+  });
 };

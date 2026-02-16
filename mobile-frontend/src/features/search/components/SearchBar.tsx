@@ -17,7 +17,7 @@ const SearchBar = ({placeholder, onPress, iconName, editable = true, value}: Pro
   if (onPress && !editable) {
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3">
+        <View className="flex-row items-center bg-white rounded-2xl px-4 py-3 mx-3 mt-3">
           <Ionicons name={iconName} size={20} color="gray" />
           <Text className={`flex-1 ml-3 text-base ${value ? 'text-gray-900' : 'text-gray-400'}`}>
             {value || placeholder}
@@ -37,6 +37,7 @@ const SearchBar = ({placeholder, onPress, iconName, editable = true, value}: Pro
           className="flex-1 ml-3 text-base"
           placeholderTextColor="#999"
           value={value}
+          numberOfLines={1}
         />
         <Pressable>
           <Ionicons name="close-circle-outline" size={20} color="#999" />

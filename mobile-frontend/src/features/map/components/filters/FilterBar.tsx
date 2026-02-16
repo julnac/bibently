@@ -1,59 +1,76 @@
-import { ScrollView, View } from "react-native";
-import FilterChip from "./FilterChip";
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { useState } from "react";
+import FilterButton from "./FilterButton";
+import FilterModal from "./FilterModal";
+import { useFilterStore } from "@/src/core/store/useFilterStore";
 
-interface FilterBarProps {
-  activeFilters: {
-    types: string[];
-    dates: string[];
-    prices: string[];
-    distance: string | null;
-    neighborhoods: string[];
-    climate: string[];
-  };
-  onFilterPress: (filterType: string) => void;
-}
+type FilterType = 'category' | 'date' | 'price' | null;
 
-const FilterBar = ({ activeFilters, onFilterPress }: FilterBarProps) => {
-  const filterConfigs = [
-    { key: 'types', label: 'Type', icon: 'grid-outline' },
-    { key: 'dates', label: 'Date', icon: 'calendar-outline' },
-    { key: 'prices', label: 'Price', icon: 'pricetag-outline' },
-    { key: 'distance', label: 'Distance', icon: 'navigate-outline' },
-    { key: 'neighborhoods', label: 'Neighborhood', icon: 'location-outline' },
-    { key: 'climate', label: 'Climate', icon: 'partly-sunny-outline' },
-  ];
+const FilterBar = () => {
+  const [activeFilter, setActiveFilter] = useState<FilterType>(null);
+  const filters = useFilterStore((state) => state.filters);
 
-  const getFilterCount = (key: string) => {
-    const filterValue = activeFilters[key as keyof typeof activeFilters];
-    if (Array.isArray(filterValue)) {
-      return filterValue.length;
+  const openFilter = (type: FilterType) => setActiveFilter(type);
+  const closeFilter = () => setActiveFilter(null);
+
+  const isFilterSet = (type: FilterType) => {
+    switch (type) {
+      case 'category': return !!filters.Type;
+      case 'date': return !!filters.StartDate;
+      case 'price': return filters.MinPrice !== undefined || filters.MaxPrice !== undefined;
+      default: return false;
     }
-    return filterValue ? 1 : 0;
   };
 
   return (
-    <View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-4 py-3"
-        contentContainerStyle={{ paddingRight: 16 }}
+    <View style={styles.container}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        contentContainerStyle={styles.bar}
       >
-        {filterConfigs.map((filter) => {
-          const count = getFilterCount(filter.key);
-          return (
-            <FilterChip
-              key={filter.key}
-              label={filter.label}
-              isActive={count > 0}
-              count={count > 0 ? count : undefined}
-              onPress={() => onFilterPress(filter.key)}
-            />
-          );
-        })}
+        <FilterButton 
+          label="Kategoria" 
+          onPress={() => openFilter('category')} 
+          isActive={activeFilter === 'category'} 
+          isSet={isFilterSet('category')}
+        />
+        <FilterButton 
+          label="Data" 
+          onPress={() => openFilter('date')} 
+          isActive={activeFilter === 'date'} 
+          isSet={isFilterSet('date')}
+        />
+        <FilterButton 
+          label="Cena" 
+          onPress={() => openFilter('price')} 
+          isActive={activeFilter === 'price'} 
+          isSet={isFilterSet('price')}
+        />
       </ScrollView>
+
+      {activeFilter && (
+        <FilterModal 
+          type={activeFilter} 
+          isVisible={true}
+          onClose={closeFilter} 
+        />
+      )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    paddingVertical: 10,
+  },
+  bar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16, 
+    alignItems: 'center',
+    gap: 8, 
+  }
+});
 
 export default FilterBar;

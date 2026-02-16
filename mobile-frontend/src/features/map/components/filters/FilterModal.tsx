@@ -1,163 +1,140 @@
-import { View, Text, Pressable, TextInput, ScrollView, Dimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  runOnJS,
-} from "react-native-reanimated";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import CategorySelector from "./CategorySelector";
+import PriceSelector from "./PriceSelector";
+import DateSelector from "./DateSelector";
+import { useFilterStore } from '@/src/core/store/useFilterStore';
+import { useState } from 'react';
 
 interface FilterModalProps {
+  type: 'category' | 'date' | 'price' | null;
   isVisible: boolean;
-  filterType: string;
-  options: string[];
-  selectedOptions: string[];
-  onApply: (selected: string[]) => void;
   onClose: () => void;
 }
 
-const filterTitles: { [key: string]: string } = {
-  types: 'Type',
-  dates: 'Date',
-  prices: 'Price',
-  distance: 'Distance',
-  neighborhoods: 'Neighborhood',
-  climate: 'Climate',
-};
+const FilterModal = ({ type, isVisible, onClose }: FilterModalProps) => {
+  const { filters, setDates, setPrices, setCategory } = useFilterStore();
 
-const FilterModal = ({
-  isVisible,
-  filterType,
-  options,
-  selectedOptions,
-  onApply,
-  onClose,
-}: FilterModalProps) => {
-  const [selected, setSelected] = useState<string[]>(selectedOptions);
-  const [searchQuery, setSearchQuery] = useState('');
-  const translateY = useSharedValue(SCREEN_HEIGHT);
-  const backdropOpacity = useSharedValue(0);
+  const [dateRange, setDateRange] = useState({
+    start: filters.StartDate?.split('T')[0] || null,
+    end: filters.EndDate?.split('T')[0] || null,
+  });
 
-  useEffect(() => {
-    setSelected(selectedOptions);
-  }, [selectedOptions]);
+  const [priceRange, setPriceRange] = useState({
+    min: filters.MinPrice ?? null,
+    max: filters.MaxPrice ?? null,
+  });
 
-  useEffect(() => {
-    if (isVisible) {
-      // translateY.value = withSpring(0, { damping: 20, stiffness: 90 });
-      translateY.value = withTiming(0.5, { duration: 300 });
-      backdropOpacity.value = withTiming(0.5, { duration: 300 });
-    } else {
-      translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 });
-      backdropOpacity.value = withTiming(0, { duration: 250 });
-    }
-  }, [isVisible]);
-
-  const animatedModalStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const animatedBackdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
-  }));
-
-  const toggleOption = (option: string) => {
-    setSelected((prev) =>
-      prev.includes(option)
-        ? prev.filter((item) => item !== option)
-        : [...prev, option]
-    );
-  };
+  const [selectedCat, setSelectedCat] = useState<string | undefined>(filters.Type);
 
   const handleApply = () => {
-    onApply(selected);
+    switch (type) {
+      case 'date':
+        setDates(dateRange.start, dateRange.end);
+        break;
+      case 'price':
+        setPrices(priceRange.min, priceRange.max);
+        break;
+      case 'category':
+        setCategory(selectedCat);
+        break;
+    }
     onClose();
   };
 
-  const handleClear = () => {
-    setSelected([]);
+  const renderContent = () => {
+    switch (type) {
+      case 'category':
+        return <CategorySelector selectedCategory={selectedCat} onSelected={setSelectedCat} />;
+      case 'date':
+        return <DateSelector onDatesSelected={setDateRange} initialDateRange={dateRange} />;
+      case 'price':
+        return <PriceSelector onSelected={setPriceRange} initialRange={priceRange} />;
+      default:
+        return null;
+    }
   };
 
-  const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (!isVisible) return null;
-
   return (
-    <View className="absolute inset-0" style={{ zIndex: 1000 }}>
-      <Animated.View
-        style={[{ position: 'absolute', inset: 0, backgroundColor: 'black' }, animatedBackdropStyle]}
-      >
-        <Pressable onPress={onClose} className="flex-1" />
-      </Animated.View>
-
-      <Animated.View
-        style={[animatedModalStyle, { height: SCREEN_HEIGHT * 0.9 }]}
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
-      >
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-          <View className="w-8" />
-          <Text className="text-lg font-semibold">{filterTitles[filterType] || filterType}</Text>
-          <Pressable onPress={onClose}>
-            <Ionicons name="close" size={24} color="#000" />
-          </Pressable>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.overlay} onPress={onClose} />
+      
+      <View style={styles.sheet}>
+        <View style={styles.handle} />
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {type === 'category' ? 'Rodzaj wydarzenia' : type === 'date' ? 'Kiedy?' : 'Cena'}
+          </Text>
         </View>
 
-        {/* Search */}
-        <View className="px-6 py-4">
-          <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3">
-            <Ionicons name="search-outline" size={20} color="#9CA3AF" />
-            <TextInput
-              placeholder="Search"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="flex-1 ml-2 text-base"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
+        <View style={styles.content}>
+          {renderContent()}
         </View>
 
-        {/* Options List */}
-        <ScrollView className="flex-1 px-6">
-          {filteredOptions.map((option) => (
-            <Pressable
-              key={option}
-              onPress={() => toggleOption(option)}
-              className="flex-row items-center justify-between py-4 border-b border-gray-100"
-            >
-              <Text className="text-base">{option}</Text>
-              {selected.includes(option) && (
-                <Ionicons name="checkmark" size={24} color="#3C46FF" />
-              )}
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Bottom Actions */}
-        <View className="px-6 py-4 border-t border-gray-200">
-          <Pressable
-            onPress={handleApply}
-            className="bg-gray-200 rounded-xl py-4 mb-3"
-          >
-            <Text className="text-center font-semibold text-base">
-              See {selected.length} result{selected.length !== 1 ? 's' : ''}
-            </Text>
-          </Pressable>
-          <Pressable onPress={handleClear}>
-            <Text className="text-center font-semibold text-base underline">
-              CLEAR
-            </Text>
-          </Pressable>
-        </View>
-      </Animated.View>
-    </View>
+        <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+          <Text style={styles.applyButtonText}>Pokaż wyniki</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  sheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    minHeight: '40%', // Dostosuj do potrzeb
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ccc',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  header: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  option: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  applyButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  applyButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  content: {
+    padding: 2
+  }
+});
 
 export default FilterModal;

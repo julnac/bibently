@@ -1,10 +1,11 @@
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Event } from "@/features/events/types";
+import { EventEntity } from "@/core/types/event.types";
 import { useRouter } from "expo-router";
+import { extractTime } from "../../events/adapters/eventAdapter";
 
 interface CompactEventItemProps {
-  event: Event;
+  event: EventEntity;
 }
 
 const CompactEventItem = ({ event }: CompactEventItemProps) => {
@@ -12,7 +13,7 @@ const CompactEventItem = ({ event }: CompactEventItemProps) => {
 
   const handlePress = () => {
     router.push({
-      pathname: `/map/event/[id]`,
+      pathname: `/event/[id]`,
       params: { id: event.id },
     });
   };
@@ -24,10 +25,10 @@ const CompactEventItem = ({ event }: CompactEventItemProps) => {
     >
       <View className="flex-1">
         <Text className="text-base font-medium text-gray-900" numberOfLines={1}>
-          {event.title}
+          {event.name}
         </Text>
         <Text className="text-sm text-gray-500 mt-1">
-          {event.date} • {event.startTime}
+          {extractTime(event.startDate)} • {extractTime(event.endDate? event.endDate : event.startDate)}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />

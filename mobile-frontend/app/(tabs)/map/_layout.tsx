@@ -6,7 +6,7 @@ export default function Layout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ title: "Mapa" }} />
       <Stack.Screen name="search" options={{ title: "Szukaj" }} />
-      <Stack.Screen name="event/[id]" options={{ title: "Event" }} />
+      <Stack.Screen name="event/[id]" options={{ title: "Event"}} />
     </Stack>
   );
 }

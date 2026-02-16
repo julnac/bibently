@@ -5,7 +5,12 @@ import { EventQueryParams } from '../types/event.params';
 
 export const eventService = {
   // GET: Pobieranie listy z filtrami
-  getEvents: async (params?: EventQueryParams) => {
+  getEvents: async (filters: EventQueryParams) => {
+
+    const params = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v != null)
+    );
+    
     const response = await apiClient.get<ApiPaginationResponse>('/events', { params });
     return response.data;
   },

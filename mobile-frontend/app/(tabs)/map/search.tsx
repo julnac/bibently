@@ -1,113 +1,90 @@
-import CommunityTrends from "@/features/search/components/CommunityTrends";
-import CompactEventItem from "@/features/search/components/CompactEventItem";
-import ContinueExploring from "@/features/search/components/ContinueExploring";
-import SeeAllEventsButton from "@/features/search/components/SeeAllEventsButton";
-import { useSearch } from "@/features/search/context/SearchContext";
-import { useUser } from "@/core/state/user";
+import { useUser } from "@/core/state/UserContext";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { mockEvents } from "../../../src/test/mocks/events.mock";
+import { useFilterStore } from "@/src/core/store/useFilterStore";
 
 type ActiveInput = 'none' | 'location' | 'query';
 
 const locationSuggestions = [
-  { id: '1', name: 'Wrzeszcz, Poland', icon: 'location' as const },
-  { id: '2', name: 'Paris, France', icon: 'location' as const },
-  { id: '3', name: 'Gdańsk, Poland', icon: 'location' as const },
-  { id: '4', name: 'Berlin, Germany', icon: 'location' as const },
+  { id: '1', name: 'Gdańsk', icon: 'location' as const },
+  { id: '2', name: 'Gdynia', icon: 'location' as const },
+  { id: '3', name: 'Sopot', icon: 'location' as const }
 ];
 
 export default function Search() {
   const router = useRouter();
-  const { addRecentSearch, userSettings } = useUser();
-  const { setLocation, location, setQuery, query } = useSearch();
+  const { setFilters, filters } = useFilterStore();
+  const { userSettings } = useUser();
+
+  const [localLocation, setLocalLocation] = useState(filters.City || "");
+  const [localQuery, setLocalQuery] = useState(filters.Name || "");
+  
   const [activeInput, setActiveInput] = useState<ActiveInput>('none');
   const locationInputRef = useRef<TextInput>(null);
   const queryInputRef = useRef<TextInput>(null);
 
-  // Filter events based on location and search query
-  const filteredEvents = useMemo(() => {
-    let results = mockEvents;
+  const formatKeywords = (text: string): string[] | undefined => {
+    if (!text.trim()) return undefined;
+    return text.toLowerCase().trim().split(/\s+/);
+  };
 
-    // Filter by location (address or neighborhood)
-    if (location.trim()) {
-      const locationLower = location.toLowerCase();
-        if (locationLower !== "current location"){
-            results = results.filter(
-                (event) =>
-                event.address.toLowerCase().includes(locationLower) ||
-                event.neighborhood?.toLowerCase().includes(locationLower)
-            );
-        };
-    }
-
-    // Filter by search query (title, tags, type)
-    if (query.trim()) {
-      const queryLower = query.toLowerCase();
-      results = results.filter(
-        (event) =>
-          event.title.toLowerCase().includes(queryLower) ||
-          event.type.toLowerCase().includes(queryLower)
-          // event.tags.some((tag) => tag.toLowerCase().includes(queryLower))
-      );
-    }
-
-    return results;
-  }, [location, query]);
+  const commitSearch = () => {
+    setFilters({
+      City: localLocation === 'Current Location' ? undefined : localLocation,
+      Keywords: formatKeywords(localQuery),
+      Name: localQuery.trim() || undefined,
+      PageToken: undefined
+    });
+    
+    router.replace('/map'); 
+  };
 
   useEffect(() => {
     queryInputRef.current?.focus();
     setActiveInput('query');
-    if (userSettings.defaultCity) {
-        setLocation(userSettings.defaultCity)
-    };
+    if (!filters.City && userSettings.defaultCity) {
+      setLocalLocation(userSettings.defaultCity);
+    }
   }, []);
 
-  const handleMyLocation = () => {
-    // In a real app, this would get the user's current location
-    setLocation('Current Location');
-    setActiveInput('query');
-    // Focus query input after location is selected
-    setTimeout(() => {
-      queryInputRef.current?.focus();
-    }, 100);
+  const focusInput = (type: ActiveInput) => {
+    setActiveInput(type);
+    const ref = type === 'location' ? locationInputRef : queryInputRef;
+    setTimeout(() => ref.current?.focus(), 50);
   };
 
   const handleLocationSelect = (locationName: string) => {
-    setLocation(locationName);
-    setActiveInput('query');
-    // Focus query input after location is selected
-    setTimeout(() => {
-      queryInputRef.current?.focus();
-    }, 100);
+    setLocalLocation(locationName);
+    if (!localQuery.trim()) {
+      focusInput('query');
+    } else {
+      commitSearch();
+    }
   };
 
   const handleLocationSubmit = () => {
-    if (location.trim() && !query.trim()) {
-        queryInputRef.current?.focus();
-        setActiveInput('query');
-    } else if (location.trim() && query.trim()) {
-      // Save to recent searches before navigating
-      addRecentSearch(location, query);
-      router.push('./index');
-    }
-  }
-
-  const handleQuerySubmit = () => {
-    if (query.trim() && !location.trim()) {
-      locationInputRef.current?.focus();
-      setActiveInput('location');
-    }
-    else if (location.trim() && query.trim()) {
-      // Save to recent searches before navigating
-      addRecentSearch(location, query);
-      router.push('./index');
+    if (localLocation.trim()) {
+      if (localQuery.trim()) {
+        commitSearch();
+      } else {
+        focusInput('query');
+      }
     }
   };
 
-  const showingResults = location.trim() && query.trim();
+  const handleQuerySubmit = () => {
+    if (localQuery.trim()) {
+      if (localLocation.trim()) {
+        commitSearch();
+      } else {
+        focusInput('location');
+      }
+    }
+  };
+
+  const showingResults = localLocation.trim() && localQuery.trim();
 
   return (
     <>
@@ -121,16 +98,16 @@ export default function Search() {
               <TextInput
                 ref={locationInputRef}
                 placeholder="Location (city, neighborhood...)"
-                value={location}
-                onChangeText={setLocation}
+                value={localLocation}
+                onChangeText={setLocalLocation}
                 onFocus={() => setActiveInput('location')}
                 onSubmitEditing={handleLocationSubmit}
                 className="flex-1 ml-3 text-base"
                 placeholderTextColor="#999"
                 autoCapitalize="none"
               />
-              {location.length > 0 && (
-                <Pressable onPress={() => setLocation("")}>
+              {localLocation.length > 0 && (
+                <Pressable onPress={() => setLocalLocation("")}>
                   <Ionicons name="close-circle" size={20} color="#999" />
                 </Pressable>
               )}
@@ -142,8 +119,8 @@ export default function Search() {
               <TextInput
                 ref={queryInputRef}
                 placeholder="Search events, categories..."
-                value={query}
-                onChangeText={setQuery}
+                value={localQuery}
+                onChangeText={setLocalQuery}
                 onFocus={() => setActiveInput('query')}
                 onSubmitEditing={handleQuerySubmit}
                 returnKeyType="search"
@@ -151,8 +128,8 @@ export default function Search() {
                 placeholderTextColor="#999"
                 autoCapitalize="none"
               />
-              {query.length > 0 && (
-                <Pressable onPress={() => setQuery("")}>
+              {localQuery.length > 0 && (
+                <Pressable onPress={() => setLocalQuery("")}>
                   <Ionicons name="close-circle" size={20} color="#999" />
                 </Pressable>
               )}
@@ -172,7 +149,7 @@ export default function Search() {
             <>
               {/* My Current Location Button */}
               <Pressable
-                onPress={handleMyLocation}
+                onPress={() => handleLocationSelect('Current Location')}
                 className="flex-row items-center py-4"
               >
                 <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
@@ -205,49 +182,24 @@ export default function Search() {
             </>
           )}
 
-          {/* Query Input Active - Show see all events, recent searches, trends */}
           {activeInput === 'query' && !showingResults && (
             <>
-              {/* See All Events Button */}
-              <SeeAllEventsButton />
-
-              {/* Divider */}
+              <Pressable 
+                  className="flex-row items-center justify-between py-4"
+                  onPress={commitSearch}
+              >
+                  <View className="flex-row items-center gap-2">
+                    <View className="w-10 h-10 rounded-lg bg-indigo-100 items-center justify-center mr-3">
+                      <Ionicons name="megaphone-outline" size={20} color="#3C46FF" />
+                    </View>
+                    <Text className="text-primary font-bold">See all events</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="black" />
+              </Pressable>
               <View className="h-px bg-gray-200 my-2" />
-
-              {/* Recent Searches */}
-              <ContinueExploring />
-
-              {/* Community Trends */}
-              <CommunityTrends />
             </>
           )}
 
-          {/* Showing Results - When typing in query after location is selected */}
-          {showingResults && (
-            <>
-              {filteredEvents.length > 0 ? (
-                <>
-                  <Text className="text-sm text-gray-500 mb-2">
-                    {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
-                  </Text>
-                  {filteredEvents.map((event) => (
-                    <CompactEventItem key={event.id} event={event} />
-                  ))}
-                  <View className="h-20" />
-                </>
-              ) : (
-                <View className="items-center justify-center py-16">
-                  <Ionicons name="sad-outline" size={64} color="#D1D5DB" />
-                  <Text className="text-gray-500 text-base mt-4 text-center">
-                    No events found
-                  </Text>
-                  <Text className="text-gray-400 text-sm mt-2 text-center px-8">
-                    Try different keywords or location
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
         </ScrollView>
       </View>
     </>

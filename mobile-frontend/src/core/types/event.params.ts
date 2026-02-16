@@ -6,9 +6,10 @@ export interface EventQueryParams {
   Name?: string;
   StartDate?: string;
   EndDate?: string;
-  MinPrice?: number | string;
-  MaxPrice?: number | string;
+  MinPrice?: number;
+  MaxPrice?: number;
   Type?: string;
+  Keywords?: string[];
   SortKey?: EventSortableAccessor;
   Order?: SortDirection;
   PageSize?: number | string;

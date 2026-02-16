@@ -1,100 +1,40 @@
-import { useSearch } from '@/features/search/context/SearchContext';
-import { useTheme } from '@/core/state/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Button, Text } from '@rneui/themed';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { darkMapStyle, lightMapStyle } from '@/features/map/config/map-styles';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Dimensions, StyleSheet, View, ActivityIndicator, Pressable, Text } from 'react-native';
+import { Button } from '@rneui/themed';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CustomMarker from '../../../src/features/map/components/CustomMarker';
 import FilterBar from '../../../src/features/map/components/filters/FilterBar';
-import FilterModal from '../../../src/features/map/components/filters/FilterModal';
-import DateFilterModal from '../../../src/features/map/components/filters/DateFilterModal';
-import PriceFilterModal from '../../../src/features/map/components/filters/PriceFilterModal';
 import ListEventCard from '../../../src/features/map/components/ListEventCard';
 import MapEventCard from '../../../src/features/map/components/MapEventCard';
 import SearchHereButton from '../../../src/features/map/components/SearchHereButton';
 import SearchBar from '../../../src/features/search/components/SearchBar';
 import { useEvents } from '../../../src/core/hooks/useEvents';
 import UniversalMap from '../../../src/features/map/components/MapComponent';
+import { FlatList } from 'react-native-gesture-handler';
+import { useFilterStore } from '@/src/core/store/useFilterStore';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const filterOptions = {
-  types: ['Concert', 'Sport', 'Workshop', 'Party', 'Festival', 'Theater'],
-  dates: ['Today', 'Tomorrow', 'This Week', 'This Month'],
-  prices: ['Free', 'Paid'],
-  distance: ['1 km', '5 km', '10 km', '25 km'],
-  neighborhoods: ['Wrzeszcz', 'Śródmieście', 'Oliwa', 'Zaspa', 'Brzeźno', 'Jelitkowo', 'Stogi'],
-  climate: ['Indoor', 'Outdoor'],
-};
 
 export default function Index() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { actualTheme } = useTheme();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-
-  const [bookmarkedEvents, setBookmarkedEvents] = useState<Set<string>>(new Set());
-  const [activeFilterModal, setActiveFilterModal] = useState<string | null>(null);
-  const { location, query } = useSearch();
+  const filters = useFilterStore((state) => state.filters);
+  const { resetFilters } = useFilterStore()
+  const { data: events, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useEvents(filters);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState({
-    types: [] as string[],
-    dates: [] as string[],
-    prices: [] as string[],
-    priceRange: { min: 0, max: 1000 } as { min: number; max: number },
-    distance: null as string | null,
-    neighborhoods: [] as string[],
-    climate: [] as string[],
-  });
-
-  const { events, loading, loadMore, error, refresh } = useEvents({ 
-    PageSize: 10,
-    SortKey: 'StartDate'
-  });
-
-  const renderFooter = () => {
-    if (!loadMore) return null;
-    return <ActivityIndicator style={{ marginVertical: 20 }} />;
-  };
-
+  // Animacja - lista zaczyna poza ekranem (SCREEN_HEIGHT)
   const listTranslateY = useSharedValue(SCREEN_HEIGHT);
-
-  const handleFilterPress = (filterType: string) => {
-    setActiveFilterModal(filterType);
-  };
-
-  const handleFilterApply = (filterType: string, selected: string[]) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterType]: selected,
-    }));
-  };
 
   const handleMarkerPress = useCallback((eventId: string) => {
     setSelectedEventId(eventId);
-  }, []);
-
-  const handleBookmark = useCallback((eventId: string) => {
-    setBookmarkedEvents((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(eventId)) {
-        newSet.delete(eventId);
-      } else {
-        newSet.add(eventId);
-      }
-      return newSet;
-    });
   }, []);
 
   const handleSearchPress = () => {
@@ -106,226 +46,149 @@ export default function Index() {
     console.log('Search here pressed');
   };
 
-  const handleShowList = () => {
+  const handleViewList = () => {
     setViewMode('list');
-    // listTranslateY.value = withSpring(0, { damping: 2, stiffness: 20 });
     listTranslateY.value = withTiming(0, { duration: 600 });
   };
 
-  const handleViewMap = (eventId: string) => {
+  const handleViewMap = () => {
     setViewMode('map');
-    setSelectedEventId(eventId);
     listTranslateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 });
   };
 
-  // const handleBack = () => {
-  //   router.push("/")
-  // }
-
   const animatedListStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: listTranslateY.value }],
+    // Dodatkowo: możemy animować opacity, żeby mapa nie "przebijała" pod spodem, gdy lista jest aktywna
+    // opacity: listTranslateY.value === SCREEN_HEIGHT ? 0 : 1, 
   }));
 
-  // Loading state
-  if (loading) {
-    return (
-      <>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <Text>Loading events...</Text>
-        </View>
-      </>
-    );
-  }
+  const getSearchLabel = () => {
+    const hasKeywords = filters.Keywords && filters.Keywords.length > 0;
+    const hasCity = !!filters.City;
+    const keywordsText = hasKeywords ? filters.Keywords?.join(' ') : filters.Name;
 
-  // Error state
-  if (error) {
-    return (
-      <>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
-          <Text style={{ color: 'red', marginBottom: 10, textAlign: 'center' }}>{error}</Text>
-          <Button
-            onPress={refresh}
-          >
-            Retry
-          </Button>
-        </View>
-      </>
-    );
-  }
+    if (keywordsText && hasCity) {
+      return `${keywordsText} w: ${filters.City}`;
+    }
+    return keywordsText || filters.City || "Szukaj wydarzeń...";
+  };
 
   return (
     <>
       <View style={styles.container}>
-        {/* Search Bar */}
-        <View className="absolute top-0 left-0 right-0 z-10 bg-white pt-12 px-4 pb-3">
-          <View className="flex-row items-center justify-center">
-            {/* <Pressable onPress={handleBack} className="p-2">
-              <Ionicons name="chevron-back-outline" size={24} color="black" />
-            </Pressable> */}
-            {/* Search Bar */}
-            <View className="flex-1">
-              <SearchBar
-                placeholder="Search for events, places..."
-                onPress={handleSearchPress}
-                value={
-                  location && query
-                    ? `${query} in ${location}`
-                    : location || query || undefined
-                }
-                iconName="search"
-                editable={false}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Filter Bar */}
-        <View className="absolute top-28 left-0 right-0 z-10">
-          <FilterBar
-            activeFilters={filters}
-            onFilterPress={handleFilterPress}
+        {/* FIXED HEADER (Search + Filters) */}
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <SearchBar
+            placeholder="Szukaj wydarzeń, miejsc..."
+            onPress={handleSearchPress}
+            value={getSearchLabel()}
+            iconName="search"
+            editable={false}
           />
+          <FilterBar/>
         </View>
 
-        {/* Map View */}
-        {viewMode === 'map' && (
-          <>
-            <View style={[styles.mapContainer, {bottom: insets.bottom}]}>
-              <UniversalMap 
-                events={events}
-                onMarkerPress={handleMarkerPress}
+        {/* BACKGROUND: MAP VIEW */}
+        <View style={styles.mapWrapper}>
+          <UniversalMap 
+            events={events}
+            onMarkerPress={handleMarkerPress}
+            selectedEventId={selectedEventId}
+          />
+          {viewMode === 'map' && (
+            <>
+              <SearchHereButton onPress={handleSearchHere} />
+              <MapEventCard
+                events={events ?? []}
                 selectedEventId={selectedEventId}
+                onEventChange={setSelectedEventId}
               />
-            </View>
+              <View style={[styles.showListButtonWrapper, { bottom: 0 }]}>
+                <Button
+                  onPress={handleViewList}
+                  type="solid"
+                  // do przeniesienia od stylów
+                  buttonStyle={{
+                    backgroundColor: 'white',
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12,
+                    paddingVertical: 16,
+                  }}
+                  containerStyle={{
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12,
+                  }}
+                >
+                  <Text style={{ color: 'black', fontWeight: '600', fontSize: 16, marginRight: 8 }}>
+                    Lista wydarzeń
+                  </Text>
+                  <Ionicons name="chevron-up-outline" size={20} color="black" />
+                </Button>
+              </View>
+            </>
+          )}
+        </View>
 
-            <SearchHereButton onPress={handleSearchHere} />
-
-            <MapEventCard
-              events={events}
-              selectedEventId={selectedEventId}
-              onBookmark={handleBookmark}
-              bookmarkedEvents={bookmarkedEvents}
-              onEventChange={setSelectedEventId}
-            />
-
-            {/* Show List Button */}
-            <View
-              className="absolute left-0 right-0 rounded-xl"
-              style={{ bottom: insets.bottom }}
-            >
-              <Button
-                onPress={handleShowList}
-                type="solid"
-                buttonStyle={{
-                  backgroundColor: 'white',
-                  borderTopLeftRadius: 12,
-                  borderTopRightRadius: 12,
-                  paddingVertical: 16,
-                }}
-                containerStyle={{
-                  borderTopLeftRadius: 12,
-                  borderTopRightRadius: 12,
-                }}
-              >
-                <Text style={{ color: 'black', fontWeight: '600', fontSize: 16, marginRight: 8 }}>
-                  Show list of {events.length} events
-                </Text>
-                <Ionicons name="chevron-up-outline" size={20} color="black" />
-              </Button>
-            </View>
-          </>
-        )}
-
-      {/* List View - Animated Slide Up */}
-      {viewMode === 'list' && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'white',
-            },
-            animatedListStyle,
-          ]}
-        >
-        <View className="flex-1 pt-44 bg-white">
-          <ScrollView className="flex-1 px-4">
-            <Text style={{ fontSize: 14, marginBottom: 16, textAlign: 'center', paddingVertical: 16 }}>
-              {events.length} events
-            </Text>
-            {events.map((event) => (
+      {/* FOREGROUND: ANIMATED LIST VIEW */}
+      <Animated.View style={[styles.listOverlay, animatedListStyle]}>
+        {/* <View className="flex-1 pt-44 bg-white"> */}
+          <FlatList
+            data={events}
+            contentContainerStyle={{ paddingTop: 180, paddingBottom: 100, paddingLeft: 10, paddingRight:10 }}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
               <ListEventCard
-                key={event.id}
-                event={event}
-                onBookmark={handleBookmark}
-                isBookmarked={bookmarkedEvents.has(event.id)}
+                event={item}
               />
-            ))}
-            <View className="h-32" />
-          </ScrollView>
+            )}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+            }}
+            onEndReachedThreshold={0.5}
+            refreshing={isLoading} 
+            onRefresh={refetch}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <ActivityIndicator style={{ marginVertical: 20 }} color="#007AFF" />
+              ) : <View style={{ height: 20 }} /> // Margines na dole
+            }
+            ListEmptyComponent={
+              !isLoading ? (
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="search-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>Brak wydarzeń dla tych filtrów</Text>
+                  <Button 
+                    title="Resetuj filtry" 
+                    type="clear" 
+                    onPress={() => resetFilters()} 
+                  />
+                </View>
+              ) : null
+            }
+          />
 
           {/* View Map Button - Fixed at Bottom */}
-          <View className="absolute bottom-12 left-0 right-0 justify-center items-center">
-            <Button
-              onPress={() => handleViewMap(selectedEventId || events[0]?.id)}
-              type="solid"
-              buttonStyle={{
-                backgroundColor: 'black',
-                borderRadius: 999,
-                paddingVertical: 12,
-                paddingHorizontal: 20,
+          <View style={[styles.viewMapButtonWrapper, { bottom: insets.bottom >= 0 ? insets.bottom : 20 }]}>
+            <Pressable 
+              onPress={handleViewMap} 
+              className="flex-row items-center bg-gray-800 px-6 py-4 rounded-full shadow-lg"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
               }}
-              icon={<Ionicons name="map-outline" size={20} color="white" style={{ marginRight: 8 }} />}
-              iconPosition="left"
             >
-              View map
-            </Button>
+              <Ionicons name="map-outline" size={16} color="white" />
+              <Text className="ml-2 text-sm text-white">Widok mapy</Text>
+            </Pressable>
           </View>
-        </View>
+        {/* </View> */}
       </Animated.View>
-      )}
 
-      {/* Filter Modal */}
-      {activeFilterModal && activeFilterModal === 'dates' ? (
-        <DateFilterModal
-          isVisible={true}
-          onApply={(selectedDates) => {
-            // Convert dates to filter format
-            console.log('Selected dates:', selectedDates);
-            setActiveFilterModal(null);
-          }}
-          onClose={() => setActiveFilterModal(null)}
-        />
-      ) : activeFilterModal && activeFilterModal === 'prices' ? (
-        <PriceFilterModal
-          isVisible={true}
-          onApply={(minPrice, maxPrice) => {
-            setFilters((prev) => ({
-              ...prev,
-              priceRange: { min: minPrice, max: maxPrice },
-            }));
-            setActiveFilterModal(null);
-          }}
-          onClose={() => setActiveFilterModal(null)}
-          initialMin={filters.priceRange.min}
-          initialMax={filters.priceRange.max}
-        />
-      ) : activeFilterModal && (
-        <FilterModal
-          isVisible={activeFilterModal !== null}
-          filterType={activeFilterModal}
-          options={filterOptions[activeFilterModal as keyof typeof filterOptions] as string[]}
-          selectedOptions={filters[activeFilterModal as keyof typeof filters] as string[]}
-          onApply={(selected) => {
-            handleFilterApply(activeFilterModal, selected);
-            setActiveFilterModal(null);
-          }}
-          onClose={() => setActiveFilterModal(null)}
-        />
-      )}
       </View>
     </>
   );
@@ -335,16 +198,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    padding: 0,
+    margin: 0, 
   },
-  mapContainer: {
+  header: {
     position: 'absolute',
-    top: 160, // Search Bar (top-12 = 48px) + FilterBar height (~112px)
+    top: 0,
     left: 0,
     right: 0,
-    bottom: 40
+    zIndex: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)', // Półprzezroczyste białe tło
+    paddingBottom: 2,
+    // Opcjonalnie: dodaj delikatny cień, żeby header odcinał się od mapy
   },
-  map: {
-    width: '100%',
-    height: '100%',
+  mapWrapper: {
+    ...StyleSheet.absoluteFillObject, // Mapa zajmuje cały ekran pod spodem
   },
+  listOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#e7e7e7",
+    zIndex: 50, // Wyżej niż mapa, niżej niż header
+  },
+  showListButtonWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  viewMapButtonWrapper: {
+    position: 'absolute',
+    alignSelf: 'center',
+  },
+  MapViewButton: {
+    backgroundColor: 'black',
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  MapViewButtonContainer: {
+    borderRadius: 999,
+    overflow: 'hidden', // Zapobiega "wyciekaniu" tła na rogach
+  },
+  MapViewButtonTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 100,
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 12,
+  }
 });

@@ -1,21 +1,21 @@
 import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import '../global.css';
-import { useAuth } from "../../src/core/context/AuthContext";
+// import { useAuth } from "../../src/core/context/AuthContext";
 
 export default function Layout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  // const { isAuthenticated, isLoading } = useAuth();
 
-  const authProtectedListener = ({ navigation }: any) => ({
-    tabPress: (e: any) => {
-      if (!isAuthenticated && !isLoading) {
-        // Zapobiegaj zmianie zakładki
-        e.preventDefault();
-        // Przekieruj do logowania
-        router.push("/login");
-      }
-    },
-  });
+  // const authProtectedListener = ({ navigation }: any) => ({
+  //   tabPress: (e: any) => {
+  //     if (!isAuthenticated && !isLoading) {
+  //       // Zapobiegaj zmianie zakładki
+  //       e.preventDefault();
+  //       // Przekieruj do logowania
+  //       router.push("/login");
+  //     }
+  //   },
+  // });
 
   return (
     <Tabs
@@ -55,9 +55,9 @@ export default function Layout() {
 
       <Tabs.Screen
         name="myEvents"
-        listeners={authProtectedListener} // Tylko dla zalogowanych
+        //listeners={authProtectedListener} // Tylko dla zalogowanych
         options={{
-          title: 'My Events',
+          title: 'Kalendarz',
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
@@ -67,7 +67,6 @@ export default function Layout() {
 
       <Tabs.Screen
         name="profile"
-        listeners={authProtectedListener} // Tylko dla zalogowanych
         options={{
           title: 'Profil',
           headerShown: false,

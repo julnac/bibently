@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Marker } from "react-native-maps";
 import { EventEntity } from "@/core/types/event.types";
+import { generateGdanskCoordinates } from "@/features/events/adapters/eventAdapter";
 
 interface CustomMarkerProps {
   event: EventEntity;
@@ -33,7 +34,7 @@ export const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) 
 
   return (
     <Marker
-      coordinate={event.coordinates}
+      coordinate={generateGdanskCoordinates()}
       onPress={onPress}
       tracksViewChanges={tracksViewChanges}
     >
