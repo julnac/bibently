@@ -111,6 +111,20 @@
                     "order": "DESCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "location.address.latitude",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "location.address.longitude",
+                    "order": "ASCENDING"
+                }
+            ]
         }
     ]
 }

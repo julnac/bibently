@@ -66,7 +66,7 @@ builder.Services.AddOutputCache(options =>
     // Define cache policy for events endpoint
     options.AddPolicy("EventsCache", policy => policy
         .Expire(TimeSpan.FromMinutes(2))
-        .SetVaryByQuery("city", "name", "startDate", "endDate", "minPrice", "maxPrice", "type", "keywords", "pageSize", "pageToken", "sortKey", "order")
+        .SetVaryByQuery("city", "name", "startDate", "endDate", "minPrice", "maxPrice", "type", "keywords", "pageSize", "pageToken", "sortKey", "order", "latitude", "longitude", "radiusKm")
         .Tag("events"));
 
     // Default size limit to prevent memory issues in container
