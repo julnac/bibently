@@ -2,6 +2,7 @@ namespace Bibently.Application.Api;
 
 using Bibently.Application.Abstractions.Models;
 using Bibently.Application.Abstractions.Enums;
+using Bibently.Application.Abstractions.Configuration;
 using System.Text.Json.Serialization;
 
 [JsonSourceGenerationOptions(
@@ -40,6 +41,9 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(UserPermissionsResponse))]
 [JsonSerializable(typeof(UserFeatureFlags))]
 [JsonSerializable(typeof(UserEntity))]
+[JsonSerializable(typeof(CategoryDefinition))]
+[JsonSerializable(typeof(List<CategoryDefinition>))]
+[JsonSerializable(typeof(IReadOnlyList<CategoryDefinition>))]
 internal partial class AppJsonContext : JsonSerializerContext
 {
 }
