@@ -10,7 +10,7 @@ export const useEvents = (filters: EventQueryParams) => {
     Error,                 // Typ błędu
     EventEntity[],         // Typ po transformacji (select)
     [string, EventQueryParams], // Typ klucza zapytania
-    string | undefined     // TYP NASZEGO TOKENA (PageParam) - to rozwiązuje błąd
+    string | undefined     // TYP NASZEGO TOKENA (PageParam)
   >({
     queryKey: ['events', filters],
     queryFn: ({ pageParam }) => 

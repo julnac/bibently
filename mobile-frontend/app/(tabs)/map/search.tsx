@@ -1,9 +1,9 @@
-import { useUser } from "@/core/state/UserContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useRef, useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View, Alert, ActivityIndicator } from "react-native";
 import { useFilterStore } from "@/src/core/store/useFilterStore";
+import { useUserLocation } from "@/src/core/store/useLocation";
 
 type ActiveInput = 'none' | 'location' | 'query';
 
@@ -15,13 +15,14 @@ const locationSuggestions = [
 
 export default function Search() {
   const router = useRouter();
-  const { setFilters, filters } = useFilterStore();
-  const { userSettings } = useUser();
+  const { setFilters, filters, setGPSLocation, resetLocalizationFilters, setCity } = useFilterStore();
+  const { location, status, requestLocation } = useUserLocation()
+  const [isLocating, setIsLocating] = useState(false);
 
   const [localLocation, setLocalLocation] = useState(filters.City || "");
   const [localQuery, setLocalQuery] = useState(filters.Name || "");
-  
   const [activeInput, setActiveInput] = useState<ActiveInput>('none');
+
   const locationInputRef = useRef<TextInput>(null);
   const queryInputRef = useRef<TextInput>(null);
 
@@ -31,23 +32,19 @@ export default function Search() {
   };
 
   const commitSearch = () => {
+    if (localLocation === "Moja lokalizacja" && location?.latitude && location?.longitude){
+      setGPSLocation(location.latitude, location.longitude);
+    } else {
+      resetLocalizationFilters();
+      setCity(localLocation)
+    }
     setFilters({
-      City: localLocation === 'Current Location' ? undefined : localLocation,
       Keywords: formatKeywords(localQuery),
       Name: localQuery.trim() || undefined,
       PageToken: undefined
     });
-    
     router.replace('/map'); 
   };
-
-  useEffect(() => {
-    queryInputRef.current?.focus();
-    setActiveInput('query');
-    if (!filters.City && userSettings.defaultCity) {
-      setLocalLocation(userSettings.defaultCity);
-    }
-  }, []);
 
   const focusInput = (type: ActiveInput) => {
     setActiveInput(type);
@@ -86,6 +83,27 @@ export default function Search() {
 
   const showingResults = localLocation.trim() && localQuery.trim();
 
+  const handleCurrentLocation = async () => {
+    setIsLocating(true);
+    try {
+      const coords = await requestLocation();
+      if (coords) {
+        handleLocationSelect("Moja lokalizacja");
+      } else {
+        // Obsługa przypadku, gdy status !== 'granted'
+        Alert.alert(
+          "Brak dostępu",
+          "Aby wyszukać wydarzenia w Twojej okolicy, musisz zezwolić na dostęp do lokalizacji w ustawieniach telefonu.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      Alert.alert("Błąd", "Nie udało się pobrać lokalizacji.");
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   return (
     <>
       <View className="flex-1 bg-white">
@@ -113,7 +131,7 @@ export default function Search() {
               )}
             </View>
 
-            {/* Search Query Bar */}
+            {/* Query Search Bar */}
             <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3">
               <Ionicons name="search-outline" size={20} color="gray" />
               <TextInput
@@ -149,15 +167,23 @@ export default function Search() {
             <>
               {/* My Current Location Button */}
               <Pressable
-                onPress={() => handleLocationSelect('Current Location')}
+                onPress={handleCurrentLocation}
+                disabled={isLocating}
                 className="flex-row items-center py-4"
               >
                 <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="navigate" size={20} color="#3B82F6" />
+                  {isLocating ? (
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                  ) : (
+                    <Ionicons name="navigate" size={20} color="#3B82F6" />
+                  )}
                 </View>
                 <Text className="text-base font-medium text-gray-900">
-                  My current location
+                  {isLocating ? "Pobieranie lokalizacji..." : "Moja lokalizacja"}
                 </Text>
+                {status === 'denied' && (
+                  <Text className="text-xs text-red-500">Brak uprawnień (kliknij, by spróbować ponownie)</Text>
+                )}
               </Pressable>
 
               {/* Divider */}
@@ -192,7 +218,7 @@ export default function Search() {
                     <View className="w-10 h-10 rounded-lg bg-indigo-100 items-center justify-center mr-3">
                       <Ionicons name="megaphone-outline" size={20} color="#3C46FF" />
                     </View>
-                    <Text className="text-primary font-bold">See all events</Text>
+                    <Text className="text-primary font-bold">Wszystkie wydarzenia</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="black" />
               </Pressable>

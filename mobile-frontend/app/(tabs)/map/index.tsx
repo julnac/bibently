@@ -18,6 +18,8 @@ import { useEvents } from '../../../src/core/hooks/useEvents';
 import UniversalMap from '../../../src/features/map/components/MapComponent';
 import { FlatList } from 'react-native-gesture-handler';
 import { useFilterStore } from '@/src/core/store/useFilterStore';
+import Slider from '@react-native-community/slider';
+import { useUserLocation } from "@/core/store/useLocation";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,9 +28,11 @@ export default function Index() {
   const insets = useSafeAreaInsets();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const filters = useFilterStore((state) => state.filters);
-  const { resetFilters } = useFilterStore()
-  const { data: events, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useEvents(filters);
+  const setFilters = useFilterStore((state) => state.setFilters);
+  const resetFilters = useFilterStore((state) => state.resetFilters);
+  const { data: events, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useEvents(filters);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const { location } = useUserLocation();
 
   // Animacja - lista zaczyna poza ekranem (SCREEN_HEIGHT)
   const listTranslateY = useSharedValue(SCREEN_HEIGHT);
@@ -64,13 +68,34 @@ export default function Index() {
 
   const getSearchLabel = () => {
     const hasKeywords = filters.Keywords && filters.Keywords.length > 0;
-    const hasCity = !!filters.City;
     const keywordsText = hasKeywords ? filters.Keywords?.join(' ') : filters.Name;
+    const currentLocation = filters.Latitude ? 'Moja lokalizacja' : null
 
-    if (keywordsText && hasCity) {
+    if (keywordsText && filters.City) {
       return `${keywordsText} w: ${filters.City}`;
     }
-    return keywordsText || filters.City || "Szukaj wydarzeń...";
+    if (keywordsText && filters.Latitude) {
+      return `${keywordsText} w: ${currentLocation}`;
+    }
+    return keywordsText || filters.City || currentLocation || "Szukaj wydarzeń...";
+  };
+
+  const centerOnUser = () => {
+    // if (deviceLocation) {
+    //   mapRef.current?.animateToRegion({
+    //     latitude: deviceLocation.lat,
+    //     longitude: deviceLocation.lng,
+    //     latitudeDelta: 0.02,
+    //     longitudeDelta: 0.02,
+    //   }, 1000);
+    // } else {
+      console.log("Centrowanie jeszcze nie działa");
+    // }
+  };
+
+  // Funkcja aktualizująca promień w Store
+  const handleRadiusChange = (value: number) => {
+    setFilters({ RadiusKm: value });
   };
 
   return (
@@ -97,6 +122,41 @@ export default function Index() {
           />
           {viewMode === 'map' && (
             <>
+              {filters.RadiusKm && (
+                <View style={styles.rightToolbar}>
+                  {/* Przycisk Lokalizacji */}
+                  <Pressable 
+                    onPress={centerOnUser}
+                    style={styles.toolbarButton}
+                    className="shadow-md active:bg-gray-100"
+                  >
+                    <Ionicons name="location" size={24} color={location ? "#3C46FF" : "#666"} />
+                  </Pressable>
+
+                  {/* Slider Promienia */}
+                  <View style={styles.sliderContainer}>
+                    <Text style={styles.sliderText}>{filters.RadiusKm}km</Text>
+                    <View style={styles.sliderWrapper}>
+                      <Slider
+                        style={{ 
+                          width: 150, 
+                          height: 40, 
+                          transform: [{ rotate: '-90deg' }] 
+                        }}
+                        minimumValue={1}
+                        maximumValue={50}
+                        step={1}
+                        value={filters.RadiusKm ? filters.RadiusKm : 5}
+                        onSlidingComplete={handleRadiusChange}
+                        minimumTrackTintColor="#3C46FF"
+                        maximumTrackTintColor="#888888"
+                        thumbTintColor="#3C46FF"
+                        // vertical={true}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
               <SearchHereButton onPress={handleSearchHere} />
               <MapEventCard
                 events={events ?? []}
@@ -255,5 +315,44 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     marginTop: 12,
-  }
+  },
+  rightToolbar: {
+    position: 'absolute',
+    right: 16,
+    top: 180, 
+    bottom: 250, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  toolbarButton: {
+    width: 45,
+    height: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sliderContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 30,
+    width: 45,
+    height: 220,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    elevation: 4,
+  },
+  sliderWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+  },
+  sliderText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#3C46FF',
+  },
 });

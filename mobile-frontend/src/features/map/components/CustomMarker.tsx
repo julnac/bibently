@@ -47,6 +47,7 @@ export const CustomMarker = ({ event, isSelected, onPress }: CustomMarkerProps) 
       }}
       onPress={onPress}
       tracksViewChanges={tracksViewChanges}
+      anchor={{ x: 0.5, y: 0.5 }}
     >
       <View
         style={{

@@ -8,14 +8,15 @@ interface FilterState {
   setFilters: (newFilters: Partial<EventQueryParams>) => void;
   setDates: (start: string | null, end: string | null) => void;
   setPrices: (min: number | null, max: number | null) => void;
-  setCategory: (type: string | undefined) => void;
+  setCategory: (category: string | undefined) => void;
   setCity: (city: string) => void;
   resetFilters: () => void;
+  resetLocalizationFilters: () => void;
+  setGPSLocation: (lat: number, lon: number) => void;
   setSorting: (key: EventSortableAccessor, order: SortDirection) => void;
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
-  // Stan początkowy zgodny z EventQueryParams
   filters: {
     City: 'Gdańsk',
     PageSize: 20,
@@ -45,8 +46,8 @@ export const useFilterStore = create<FilterState>((set) => ({
     }
   })),
 
-  setCategory: (type) => set((state) => ({
-    filters: { ...state.filters, Type: type }
+  setCategory: (category) => set((state) => ({
+    filters: { ...state.filters, Category: category }
   })),
 
   setCity: (city) => set((state) => ({
@@ -54,8 +55,30 @@ export const useFilterStore = create<FilterState>((set) => ({
   })),
 
   resetFilters: () => set({
-    filters: { City: 'Gdańsk', PageSize: 20 }
+    filters: { City: 'Gdańsk', PageSize: 20, PageToken: undefined }
   }),
+
+  resetLocalizationFilters: () => set((state) => ({
+    filters: { 
+      ...state.filters, 
+      Latitude: undefined, 
+      Longitude: undefined, 
+      RadiusKm: undefined,
+      City: undefined,
+      PageToken: undefined 
+    }
+  })),
+
+  setGPSLocation: (lat: number, lon: number) => set((state) => ({
+    filters: {
+      ...state.filters,
+      Latitude: lat,
+      Longitude: lon,
+      RadiusKm: 10,
+      City: undefined,
+      PageToken: undefined 
+    }
+  })),
 
   setSorting: (key: EventSortableAccessor, order: SortDirection) => set((state) => ({
     filters: {

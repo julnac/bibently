@@ -124,7 +124,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         addRecentSearch,
         clearRecentSearches,
         removeRecentSearch,
-        updateUserSettings,
+        updateUserSettings,     
       }}
     >
       {children}
