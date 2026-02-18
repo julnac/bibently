@@ -278,8 +278,8 @@ public class OutputCacheTests
         var contentA = await responseA.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
 
         // Assert 1: Should get Event A
-        contentA!.Items.Should().ContainSingle(e => e.Id == eventA.Id, "Category filter 'MusicEvent' should return Event A");
-        contentA.Items.Should().NotContain(e => e.Id == eventB.Id);
+        contentA!.Items.Should().ContainSingle(e => e.Id == createdA.Id, "Category filter 'MusicEvent' should return Event A");
+        contentA.Items.Should().NotContain(e => e.Id == createdB.Id);
 
         // Act 2: Get Sports events
         // IF CACHING IGNORES 'category', this request will match the cache key of the previous request (city=X)
@@ -289,8 +289,8 @@ public class OutputCacheTests
         var contentB = await responseB.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
 
         // Assert 2: Should get Event B
-        contentB!.Items.Should().ContainSingle(e => e.Id == eventB.Id, "Cache collision detected! Returned Music events when Sports was requested.");
-        contentB.Items.Should().NotContain(e => e.Id == eventA.Id, "Cache collision detected! Returned Music events when Sports was requested.");
+        contentB!.Items.Should().ContainSingle(e => e.Id == createdB.Id, "Cache collision detected! Returned Music events when Sports was requested.");
+        contentB.Items.Should().NotContain(e => e.Id == createdA.Id, "Cache collision detected! Returned Music events when Sports was requested.");
     }
 
     /// <summary>
