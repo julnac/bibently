@@ -8,7 +8,7 @@ using Xunit;
 
 public class AdminUserUtility(ITestOutputHelper outputHelper)
 {
-    public void EnsureLocalAdminUserAsync(string? adminUid)
+    public async Task EnsureLocalAdminUserAsync(string? adminUid)
     {
         if (string.IsNullOrEmpty(adminUid))
         {
@@ -55,7 +55,7 @@ public class AdminUserUtility(ITestOutputHelper outputHelper)
         // Check if emulator is running
         if (!string.IsNullOrEmpty(emulatorHost))
         {
-            if (!IsEmulatorRunning(emulatorHost))
+            if (!await IsEmulatorRunning(emulatorHost))
             {
                 outputHelper.WriteLine($"⚠️ [Admin Setup] Auth Emulator is not running at {emulatorHost}. Skipping admin user creation.");
                 Log.Warning("⚠️ [Admin Setup] Auth Emulator is not running at {Host}. Skipping admin user creation.", emulatorHost);
@@ -67,7 +67,7 @@ public class AdminUserUtility(ITestOutputHelper outputHelper)
         {
             try
             {
-                var userRecord = auth.GetUserAsync(adminUid).GetAwaiter().GetResult();
+                var userRecord = await auth.GetUserAsync(adminUid);
                 outputHelper.WriteLine($"✅ [Admin Setup] User already exists: {adminUid}");
                 Log.Information("✅ [Admin Setup] User already exists: {AdminUid}", adminUid);
                 return;
@@ -81,7 +81,7 @@ public class AdminUserUtility(ITestOutputHelper outputHelper)
             {
                 outputHelper.WriteLine($"⏳ [Admin Setup] Waiting for Auth Emulator (attempt {i+1}/{maxRetries})... Error: {ex.Message}");
                 Log.Warning("⏳ [Admin Setup] Waiting for Auth Emulator (attempt {Attempt}/{MaxRetries})... Error: {Message}", i + 1, maxRetries, ex.Message);
-                Task.Delay(2000).Wait();
+                await Task.Delay(2000);
             }
         }
 
@@ -95,7 +95,7 @@ public class AdminUserUtility(ITestOutputHelper outputHelper)
                 EmailVerified = true
             };
 
-            var newUser = auth.CreateUserAsync(userArgs).GetAwaiter().GetResult();
+            await auth.CreateUserAsync(userArgs);
             outputHelper.WriteLine($"✅ [Admin Setup] Created user: {adminUid}");
             Log.Information("✅ [Admin Setup] Created user: {AdminUid}", adminUid);
         }
@@ -106,13 +106,13 @@ public class AdminUserUtility(ITestOutputHelper outputHelper)
         }
     }
 
-    private static bool IsEmulatorRunning(string host)
+    private static async Task<bool> IsEmulatorRunning(string host)
     {
         try
         {
             using var client = new System.Net.Http.HttpClient();
             client.Timeout = TimeSpan.FromSeconds(2);
-            var response = client.GetAsync($"http://{host}").GetAwaiter().GetResult();
+            var response = await client.GetAsync($"http://{host}");
             return true;
         }
         catch

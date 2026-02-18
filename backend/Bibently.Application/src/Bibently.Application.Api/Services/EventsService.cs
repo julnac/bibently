@@ -41,7 +41,7 @@ public class EventsService(IPrivateServerClient privateServerClient, IEventsRepo
 
         return new ApiPaginationResponse
         {
-            Items = mapper.Map(items),
+            Items = mapper.MapToSummaries(mapper.Map(items)),
             NextPageToken = nextPageToken
         };
     }

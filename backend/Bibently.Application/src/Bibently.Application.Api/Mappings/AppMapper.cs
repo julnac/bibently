@@ -22,6 +22,21 @@ public partial class AppMapper
     public partial EventEntity Map(EventDocument source);
     public partial EventDocument Map(EventEntity source);
 
+    [MapProperty([nameof(EventEntity.Offer), nameof(Offer.Price)], [nameof(EventSummary.Price)])]
+    [MapProperty([nameof(EventEntity.Offer), nameof(Offer.Currency)], [nameof(EventSummary.Currency)])]
+    [MapperIgnoreSource(nameof(EventEntity.Description))]
+    [MapperIgnoreSource(nameof(EventEntity.ArticleBody))]
+    [MapperIgnoreSource(nameof(EventEntity.DatePublished))]
+    [MapperIgnoreSource(nameof(EventEntity.Url))]
+    [MapperIgnoreSource(nameof(EventEntity.Performer))]
+    [MapperIgnoreSource(nameof(EventEntity.Organizer))]
+    [MapperIgnoreSource(nameof(EventEntity.Provider))]
+    [MapperIgnoreSource(nameof(EventEntity.CreatedAt))]
+    [MapperIgnoreSource(nameof(EventEntity.CreatedBy))]
+    public partial EventSummary MapToSummary(EventEntity source);
+
+    public partial List<EventSummary> MapToSummaries(List<EventEntity> source);
+
     public partial TrackingEvent Map(TrackingEventDocument source);
     public partial TrackingEventDocument Map(TrackingEvent source);
 

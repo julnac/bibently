@@ -12,6 +12,8 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(ApiPaginationResponse))]
 [JsonSerializable(typeof(EventEntity))]
 [JsonSerializable(typeof(List<EventEntity>))]
+[JsonSerializable(typeof(EventSummary))]
+[JsonSerializable(typeof(List<EventSummary>))]
 [JsonSerializable(typeof(CreateEventEntityRequest))]
 [JsonSerializable(typeof(TrackingEvent))]
 [JsonSerializable(typeof(List<TrackingEvent>))]

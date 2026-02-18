@@ -12,28 +12,38 @@ using System.Net;
 using System.Net.Http.Json;
 using Bibently.Application.Integration.Tests.Fixtures;
 using Bibently.Application.Integration.Tests.Utils;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Repository = Bibently.Application.Repository;
 
 public class ProgramTests
     : IClassFixture<BibentlyWebApplicationFactory>,
-        IClassFixture<FirebaseEmulatorsContainerFixture>
+        IClassFixture<FirebaseEmulatorsContainerFixture>,
+        IAsyncLifetime
 {
     private readonly HttpClient _client;
     private readonly BibentlyWebApplicationFactory _factory;
+    private readonly ITestOutputHelper _outputHelper;
 
     // API v1 base path for versioned endpoints
     private const string ApiV1 = "/api/v1";
 
     public ProgramTests(BibentlyWebApplicationFactory factory, ITestOutputHelper outputHelper)
     {
-        var adminUserUtility = new AdminUserUtility(outputHelper);
-        adminUserUtility.EnsureLocalAdminUserAsync("demo-admin-uid");
-
         _factory = factory;
         _client = factory.CreateClient();
+        _outputHelper = outputHelper;
     }
+
+    public async ValueTask InitializeAsync()
+    {
+        var adminUserUtility = new AdminUserUtility(_outputHelper);
+        await adminUserUtility.EnsureLocalAdminUserAsync("demo-admin-uid");
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task GivenValidEvent_WhenPostEvent_ThenEventIsSavedToDb()
@@ -364,21 +374,20 @@ public class ProgramTests
     [Fact]
     public async Task GivenTooManyRequests_WhenGetEvents_ThenStrictRateLimitIsTriggered()
     {
-        // Arrange
-        // We use a fresh client for this test to ensure we are spamming from the same "user/IP" context
-        // stored in the shared factory.
-        // Note: In TestServer, RemoteIpAddress might be null or 127.0.0.1, so all requests map to the same partition.
+        // Use a dedicated factory class so we don't lose configuration through WithWebHostBuilder
+        await using var rateLimitFactory = new RateLimitFactory();
+        using var isolatedClient = rateLimitFactory.CreateClient();
 
         var token = TokenTool.Generate("demo-admin-uid");
-        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        isolatedClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        // Act
-        // Use a loop to exhaust the limit (10) + buffer.
-        // If other tests ran before this, we might hit it sooner.
+        // Act - exhaust the low limit (5) + buffer
+        // We need enough requests to definitely trip the limit
         var limitEncountered = false;
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 30; i++)
         {
-            var response = await _client.GetAsync(new Uri($"{ApiV1}/events", UriKind.Relative), TestContext.Current.CancellationToken);
+            var response = await isolatedClient.GetAsync(new Uri($"{ApiV1}/events", UriKind.Relative), TestContext.Current.CancellationToken);
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 limitEncountered = true;
@@ -387,7 +396,31 @@ public class ProgramTests
         }
 
         // Assert
-        limitEncountered.Should().BeTrue("Should hit 429 TooManyRequests after exceeding the strict limit of 10 requests");
+        limitEncountered.Should().BeTrue("Should hit 429 TooManyRequests after exceeding the strict limit");
+    }
+
+    private sealed class RateLimitFactory : BibentlyWebApplicationFactory
+    {
+        public RateLimitFactory()
+        {
+            // IMPORTANT: Disable the high test limits from the base class so our low limit works
+            UseHighRateLimits = false;
+        }
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            // Call base to get PrivateServer setup which runs BEFORE our custom configuration here
+            base.ConfigureWebHost(builder);
+
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["RateLimiting:Strict:PermitLimit"] = "5",
+                    ["RateLimiting:Strict:WindowMinutes"] = "1",
+                });
+            });
+        }
     }
 
     [Fact]

@@ -125,6 +125,70 @@
                     "order": "ASCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "startDate",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "startDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "location.address.city",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "startDate",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "location.address.city",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "startDate",
+                    "order": "DESCENDING"
+                }
+            ]
         }
     ]
 }

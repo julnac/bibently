@@ -5,8 +5,8 @@ using System.Text.Json.Serialization;
 public class ApiPaginationResponse
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<EventEntity>? Items { get; set; }
-    
+    public List<EventSummary>? Items { get; set; }
+
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? NextPageToken { get; set; }
 }

@@ -19,20 +19,28 @@ using Xunit;
 /// </summary>
 public class OutputCacheTests
     : IClassFixture<BibentlyWebApplicationFactory>,
-        IClassFixture<FirebaseEmulatorsContainerFixture>
+        IClassFixture<FirebaseEmulatorsContainerFixture>,
+        IAsyncLifetime
 {
     private readonly HttpClient _client;
     private readonly BibentlyWebApplicationFactory _factory;
+    private readonly ITestOutputHelper _outputHelper;
     private const string ApiV1 = "/api/v1";
 
     public OutputCacheTests(BibentlyWebApplicationFactory factory, ITestOutputHelper outputHelper)
     {
-        var adminUserUtility = new AdminUserUtility(outputHelper);
-        adminUserUtility.EnsureLocalAdminUserAsync("demo-admin-uid");
-
         _factory = factory;
         _client = factory.CreateClient();
+        _outputHelper = outputHelper;
     }
+
+    public async ValueTask InitializeAsync()
+    {
+        var adminUserUtility = new AdminUserUtility(_outputHelper);
+        await adminUserUtility.EnsureLocalAdminUserAsync("demo-admin-uid");
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task GivenGetEventsEndpoint_WhenCalledTwice_ThenSecondResponseIsCached()
@@ -239,6 +247,50 @@ public class OutputCacheTests
         secondRequestMs.Should().BeLessThanOrEqualTo(
             firstRequestMs,
             $"Cached response ({secondRequestMs}ms) should be faster than or equal to first request ({firstRequestMs}ms)");
+    }
+
+    [Fact]
+    public async Task GivenCacheCollisionRisk_WhenFilteringByCategory_ThenCacheDistinguishesCategories()
+    {
+        // Arrange
+        var uniqueCity = $"BucketTest_{Guid.NewGuid():N}";
+        var token = TokenTool.Generate("demo-admin-uid");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Create Event A (Music)
+        var eventA = CreateEventEntity(Guid.NewGuid(), uniqueCity, "Event A");
+        eventA.Category = "MusicEvent";
+        var createdA = await PostEventAsync(eventA);
+        createdA.Category.Should().Be("MusicEvent", "Category should be persisted");
+
+        // Create Event B (Sports)
+        var eventB = CreateEventEntity(Guid.NewGuid(), uniqueCity, "Event B");
+        eventB.Category = "SportsEvent";
+        var createdB = await PostEventAsync(eventB);
+        createdB.Category.Should().Be("SportsEvent", "Category should be persisted");
+
+        // Clear auth
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        // Act 1: Get Music events (Cache Miss -> Cache Set for key: city=X, category=MusicEvent)
+        var responseA = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}&category=MusicEvent", UriKind.Relative), TestContext.Current.CancellationToken);
+        responseA.StatusCode.Should().Be(HttpStatusCode.OK);
+        var contentA = await responseA.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        // Assert 1: Should get Event A
+        contentA!.Items.Should().ContainSingle(e => e.Id == eventA.Id, "Category filter 'MusicEvent' should return Event A");
+        contentA.Items.Should().NotContain(e => e.Id == eventB.Id);
+
+        // Act 2: Get Sports events
+        // IF CACHING IGNORES 'category', this request will match the cache key of the previous request (city=X)
+        // and return the cached result (Event A), which is WRONG.
+        var responseB = await _client.GetAsync(new Uri($"{ApiV1}/events?city={uniqueCity}&category=SportsEvent", UriKind.Relative), TestContext.Current.CancellationToken);
+        responseB.StatusCode.Should().Be(HttpStatusCode.OK);
+        var contentB = await responseB.Content.ReadFromJsonAsync<ApiPaginationResponse>(TestContext.Current.CancellationToken);
+
+        // Assert 2: Should get Event B
+        contentB!.Items.Should().ContainSingle(e => e.Id == eventB.Id, "Cache collision detected! Returned Music events when Sports was requested.");
+        contentB.Items.Should().NotContain(e => e.Id == eventA.Id, "Cache collision detected! Returned Music events when Sports was requested.");
     }
 
     /// <summary>
