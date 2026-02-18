@@ -52,7 +52,7 @@ public class FirestoreEventsRepository : IEventsRepository
                     query = query.WhereLessThanOrEqualTo("offer.price", filters.MaxPrice.Value);
 
                 if (!string.IsNullOrEmpty(filters.Category))
-                    query = query.WhereEqualTo("type", filters.Category);
+                    query = query.WhereEqualTo("category", filters.Category);
 
                 if (filters.Keywords != null && filters.Keywords.Length != 0)
                     query = query.WhereArrayContainsAny("keywords", filters.Keywords);

@@ -109,7 +109,6 @@ public static class OpenApiInstaller
             {
                 foreach (var parameter in operation.Parameters)
                 {
-                    // Fix here: Use ParameterLocation directly as namespace is imported
                     if (parameter.In == ParameterLocation.Query)
                     {
                         if (parameter is OpenApiParameter p)
@@ -122,6 +121,52 @@ public static class OpenApiInstaller
                             s.Example = null;
                         }
                     }
+                }
+            }
+
+            // Manually inject FilterRequest query params for GET /events.
+            // FilterRequest uses BindAsync for custom keyword parsing, which prevents
+            // ASP.NET Core's OpenAPI generator from discovering its properties automatically.
+            var isGetEvents = context.Description.HttpMethod?.Equals("GET", StringComparison.OrdinalIgnoreCase) == true
+                && context.Description.RelativePath?.TrimStart('/').Equals("api/v1/events", StringComparison.OrdinalIgnoreCase) == true;
+
+            if (isGetEvents)
+            {
+                if (operation.Parameters is null)
+                {
+                    operation.Parameters = new List<IOpenApiParameter>();
+                }
+
+                IOpenApiParameter[] filterParams =
+                [
+                    new OpenApiParameter { Name = "city",      In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.String } },
+                    new OpenApiParameter { Name = "name",      In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.String } },
+                    new OpenApiParameter { Name = "category",  In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.String } },
+                    new OpenApiParameter { Name = "startDate", In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "date-time" } },
+                    new OpenApiParameter { Name = "endDate",   In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "date-time" } },
+                    new OpenApiParameter { Name = "minPrice",  In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.Number } },
+                    new OpenApiParameter { Name = "maxPrice",  In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.Number } },
+                    new OpenApiParameter
+                    {
+                        Name = "keywords", In = ParameterLocation.Query, Required = false,
+                        Description = "Comma-separated list of keywords, e.g. music,outdoor",
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String }
+                    },
+                    new OpenApiParameter { Name = "latitude",  In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.Number } },
+                    new OpenApiParameter { Name = "longitude", In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.Number } },
+                    new OpenApiParameter { Name = "radiusKm",  In = ParameterLocation.Query, Required = false, Schema = new OpenApiSchema { Type = JsonSchemaType.Number } },
+                ];
+
+                // Prepend filter params before the sort params so they appear first in Scalar
+                var existingParams = operation.Parameters.ToList();
+                operation.Parameters.Clear();
+                foreach (var fp in filterParams)
+                {
+                    operation.Parameters.Add(fp);
+                }
+                foreach (var ep in existingParams)
+                {
+                    operation.Parameters.Add(ep);
                 }
             }
 

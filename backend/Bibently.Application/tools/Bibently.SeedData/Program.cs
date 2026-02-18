@@ -192,7 +192,7 @@ public class EventGenerator
         return new Dictionary<string, object>
         {
             ["id"] = id,
-            ["type"] = eventType,
+            ["category"] = eventType,
             ["name"] = $"{eventName} #{index + 1}",
             ["description"] = $"{description} - Featuring {performer.Name} at {venue}.",
             ["startDate"] = Timestamp.FromDateTime(startDate),
