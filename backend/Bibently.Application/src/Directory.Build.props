@@ -1,9 +1,0 @@
-<Project>
-
-    <Import Project="$(MSBuildThisFileDirectory)../.build/src.props" />
-
-    <PropertyGroup>
-        <PackageTags>bibently.applilcation;$(PackageTags)</PackageTags>
-    </PropertyGroup>
-
-</Project>
