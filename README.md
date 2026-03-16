@@ -14,7 +14,7 @@ https://bib-orcin.vercel.app/
 - **Real-Time Filtering**: Instant updates to events based on location, dates, price range, and custom sorting (e.g., closest date, attendance, distance).
 - **URL State Synchronization**: Search state relies on URL parameters ensuring all filtered views are shareable.
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
 - **Styling**: Tailwind CSS & Vanilla CSS modules (`globals.css`)
@@ -24,7 +24,7 @@ https://bib-orcin.vercel.app/
 - **Date Handling**: `date-fns` & `react-day-picker`
 - **Map**: Mapbox GL JS / React Map GL (planned/integrated via interactive map components)
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ Ensure you have Node.js (v18+) and your preferred package manager installed.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 📂 Project Structure
+## Project Structure
 
 - `app/` - Next.js App Router pages and layouts.
 - `src/components/` - Reusable UI components:
@@ -67,7 +67,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `src/types/` - TypeScript interface definitions for API responses and business logic.
 - `src/utils/` - Helper functions across the app.
 
-## 📜 License
+## License
 
 This project is proprietary. All rights reserved.
 
