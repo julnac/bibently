@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { EventEntity } from '../types/event.types';
+import { EventEntity, CreateEventRequest } from '../types/event.types';
 import { ApiPaginationResponse } from '../types/api.types';
 import { EventQueryParams } from '../types/event.params';
 
@@ -21,7 +21,7 @@ export const eventService = {
   },
 
   // POST: Create event
-  createEvent: async (event: Partial<EventEntity>): Promise<EventEntity> => {
+  createEvent: async (event: Partial<CreateEventRequest>): Promise<EventEntity> => {
     const response = await apiClient.post<EventEntity>('/events', event);
     return response.data;
   },
@@ -33,8 +33,8 @@ export const eventService = {
   },
 
   // POST: Bulk create
-  bulkCreateEvents: async (events: EventEntity[]): Promise<boolean> => {
+  bulkCreateEvents: async (events: EventEntity[]): Promise<EventEntity[]> => {
     const response = await apiClient.post('/events/bulk', events);
-    return response.status === 200;
+    return response.data;
   },
 };

@@ -18,8 +18,8 @@ interface FilterState {
 
 export const useFilterStore = create<FilterState>((set) => ({
   filters: {
-    City: 'Gdańsk',
-    PageSize: 20,
+    city: 'Gdańsk',
+    pageSize: 20,
   },
 
   setFilters: (newParams) =>
@@ -31,8 +31,8 @@ export const useFilterStore = create<FilterState>((set) => ({
     set((state) => ({
       filters: {
         ...state.filters,
-        StartDate: start ? `${start}T00:00:00Z` : undefined,
-        EndDate: end ? `${end}T23:59:59Z` : undefined,
+        startDate: start ? `${start}T00:00:00Z` : undefined,
+        endDate: end ? `${end}T23:59:59Z` : undefined,
       },
     })),
 
@@ -40,35 +40,35 @@ export const useFilterStore = create<FilterState>((set) => ({
     set((state) => ({
       filters: {
         ...state.filters,
-        MinPrice: min !== null ? min : undefined,
-        MaxPrice: max !== null ? max : undefined,
+        minPrice: min !== null ? min : undefined,
+        maxPrice: max !== null ? max : undefined,
       },
     })),
 
   setCategory: (category) =>
     set((state) => ({
-      filters: { ...state.filters, Category: category },
+      filters: { ...state.filters, category: category },
     })),
 
   setCity: (city) =>
     set((state) => ({
-      filters: { ...state.filters, City: city },
+      filters: { ...state.filters, city: city },
     })),
 
   resetFilters: () =>
     set({
-      filters: { City: 'Gdańsk', PageSize: 20, PageToken: undefined },
+      filters: { city: 'Gdańsk', pageSize: 20, pageToken: undefined },
     }),
 
   resetLocalizationFilters: () =>
     set((state) => ({
       filters: {
         ...state.filters,
-        Latitude: undefined,
-        Longitude: undefined,
-        RadiusKm: undefined,
-        City: undefined,
-        PageToken: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        radiusKm: undefined,
+        city: undefined,
+        pageToken: undefined,
       },
     })),
 
@@ -76,11 +76,11 @@ export const useFilterStore = create<FilterState>((set) => ({
     set((state) => ({
       filters: {
         ...state.filters,
-        Latitude: lat,
-        Longitude: lon,
-        RadiusKm: 10,
-        City: undefined,
-        PageToken: undefined,
+        latitude: lat,
+        longitude: lon,
+        radiusKm: 10,
+        city: undefined,
+        pageToken: undefined,
       },
     })),
 
@@ -88,9 +88,9 @@ export const useFilterStore = create<FilterState>((set) => ({
     set((state) => ({
       filters: {
         ...state.filters,
-        SortKey: key,
-        Order: order,
-        PageToken: undefined,
+        sortKey: key,
+        order: order,
+        pageToken: undefined,
       },
     })),
 }));

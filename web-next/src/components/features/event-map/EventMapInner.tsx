@@ -5,16 +5,12 @@ import { useSearchFilters } from '@/src/hooks/useSearchFilters';
 import { useEvents } from '@/src/hooks/useEvents';
 import EventMarker from './EventMarker';
 import { useEffect } from 'react';
-import type { EventEntity } from '@/src/types/event.types';
+import type { EventSummary } from '@/src/types/event.types';
 
-// Default center — Gdańsk
 const DEFAULT_CENTER: [number, number] = [54.352, 18.6466];
 const DEFAULT_ZOOM = 12;
 
-/**
- * Map auto-fit to event bounds
- */
-function MapBoundsUpdater({ events }: { events: EventEntity[] }) {
+function MapBoundsUpdater({ events }: { events: EventSummary[] }) {
     const map = useMap();
 
     useEffect(() => {
@@ -37,7 +33,7 @@ export default function EventMapInner() {
     const { data: events } = useEvents(filters);
     const eventsWithCoords =
         events?.filter(
-            (e: EventEntity) => e.location?.address?.latitude && e.location?.address?.longitude
+            (e: EventSummary) => e.location?.address?.latitude && e.location?.address?.longitude
         ) || [];
 
     return (
@@ -48,11 +44,11 @@ export default function EventMapInner() {
             zoomControl={false}
         >
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
             />
             {eventsWithCoords.length > 0 && <MapBoundsUpdater events={eventsWithCoords} />}
-            {eventsWithCoords.map((event: EventEntity) => (
+            {eventsWithCoords.map((event: EventSummary) => (
                 <EventMarker key={event.id} event={event} />
             ))}
         </MapContainer>

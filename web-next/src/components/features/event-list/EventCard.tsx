@@ -1,100 +1,130 @@
-import { EventEntity } from '@/src/types/event.types';
+import { EventSummary } from '@/src/types/event.types';
+import { format, differenceInDays } from 'date-fns';
+import { pl, enUS } from 'date-fns/locale';
+import { MapPin, Calendar, Globe, Map, Heart, Share2, Users } from 'lucide-react';
+import Link from 'next/link';
+import { createSlug } from '@/src/utils/url.utils';
+import Image from 'next/image';
 
 interface EventCardProps {
-    event: EventEntity;
+    event: EventSummary;
     isHovered: boolean;
     onMouseEnter: () => void;
     onMouseLeave: () => void;
 }
 
-/**
- * Dumb presentational EventCard — receives all data via props.
- * Ready for future NativeWind/shared migration.
- */
 export default function EventCard({
     event,
     isHovered,
     onMouseEnter,
     onMouseLeave,
 }: EventCardProps) {
-    const formattedDate = new Date(event.startDate).toLocaleDateString('pl-PL', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    const formattedDateDay = format(new Date(event.startDate), 'EEEE', { locale: enUS });
+    const formattedDateRest = format(new Date(event.startDate), 'd MMM • HH:mm', { locale: enUS });
 
-    const price =
-        event.offer?.price === 0
-            ? 'Za darmo'
-            : event.offer?.price
-                ? `${event.offer.price} ${event.offer.currency || 'PLN'}`
-                : null;
+    const isOnline = event.attendanceMode === 'OnlineEventAttendanceMode';
+
+    const slug = createSlug(event.name, event.id);
 
     return (
         <article
-            className={`event-card rounded-xl overflow-hidden cursor-pointer group ${isHovered ? 'event-card--active ring-2 ring-primary/30' : ''
+            className={`flex items-center bg-surface rounded-[16px] gap-4 relative shadow-[0_4px_12px_rgba(0,0,0,0.05)] ${isHovered ? 'ring-1 ring-primary/20' : ''
                 }`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            {/* ── Image ── */}
-            <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-surface">
+            {/* ── Image Section (Left) ── */}
+            <Link href={`/event/${slug}`} className="shrink-0 relative w-[200px] h-[150px] rounded-l-[16px] overflow-hidden bg-surface-hover">
                 {event.imageUrl ? (
-                    <img
+                    <Image
                         src={event.imageUrl}
                         alt={event.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
+                        fill
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        🎉
+                    <div className="w-full h-full flex items-center justify-center text-3xl font-bold font-serif bg-surface-secondary text-text-secondary opacity-50">
+                        IMAGE
                     </div>
                 )}
+            </Link>
 
-                {/* Category Badge */}
-                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur-sm text-text-primary shadow-sm">
-                    {event.category}
-                </span>
-
-                {/* Favourite Button */}
-                <button
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-sm"
-                    aria-label="Dodaj do ulubionych"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                    </svg>
-                </button>
-            </div>
-
-            {/* ── Info ── */}
-            <div className="pt-3 pb-1">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-text-primary text-[15px] line-clamp-1 leading-snug">
+            {/* ── Content Section (Middle) ── */}
+            <div className="flex flex-col flex-1 h-[130px] justify-between min-w-0 pr-12">
+                <Link href={`/event/${slug}`}>
+                    {/* Title */}
+                    <h3 className={`font-bold text-base line-clamp-1 mb-1 transition-colors ${isHovered ? "text-primary" : "text-text-primary"}`}>
                         {event.name}
                     </h3>
+
+                    {/* Date */}
+                    <div className="text-sm font-medium mb-1">
+                        {differenceInDays(new Date(event.startDate), new Date()) <= 7 && (
+                            <span className="text-primary">{formattedDateDay}</span>
+                        )}
+                        <span className="text-text-secondary">{differenceInDays(new Date(event.startDate), new Date()) <= 6 ? ', ' : ''}{formattedDateRest}</span>
+                    </div>
+
+                    {/* Location */}
+                    <div className="text-sm font-medium text-text-secondary line-clamp-1 mb-3">
+                        {event.location?.name || event.location?.address?.city || 'No location set'}
+                    </div>
+                </Link>
+
+                {/* Bottom Row */}
+                <div className="flex items-center justify-between w-full mt-auto">
+                    {/* Icons block */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono text-text-secondary">
+                            <Users size={12} />
+                            <span>{event.attendeeCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono text-text-secondary">
+                            {isOnline ? <Globe size={12} /> : <MapPin size={12} />}
+                            <span>{isOnline ? 'online' : 'on-site'}</span>
+                        </div>
+                    </div>
+
+                    {/* Keywords (Tags) */}
+                    {event.keywords && event.keywords.length > 0 && (
+                        <div className="flex items-center gap-1.5 hidden sm:flex truncate">
+                            {event.keywords.slice(0, 3).map((keyword) => (
+                                <span
+                                    key={keyword}
+                                    className="px-2.5 py-1 rounded-md border border-border text-[10px] font-mono tracking-wide text-text-secondary bg-transparent"
+                                >
+                                    {keyword}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
-
-                <p className="text-sm text-text-secondary mt-0.5 flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                        <circle cx="12" cy="9" r="2.5" />
-                    </svg>
-                    <span className="line-clamp-1">
-                        {event.location?.name || event.location?.address?.city || 'Lokalizacja nieznana'}
-                    </span>
-                </p>
-
-                <p className="text-sm text-text-secondary mt-0.5">{formattedDate}</p>
-
-                {price && (
-                    <p className="text-sm font-semibold text-text-primary mt-1">{price}</p>
-                )}
             </div>
-        </article>
+
+            {/* ── Right Action Buttons ── */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <button
+                    className="w-8 h-8 rounded-lg bg-text-secondary text-white flex items-center justify-center hover:bg-foreground transition-colors shadow-sm"
+                    aria-label="Save bookmark"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
+                    <Heart size={14} className="fill-transparent" />
+                </button>
+                <button
+                    className="w-8 h-8 rounded-lg bg-text-secondary text-white flex items-center justify-center hover:bg-foreground transition-colors shadow-sm"
+                    aria-label="Share"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
+                    <Share2 size={14} />
+                </button>
+            </div>
+        </article >
     );
 }

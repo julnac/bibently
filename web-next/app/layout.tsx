@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Providers from '@/src/providers/Providers';
 
 const inter = Inter({
   variable: '--font-inter',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
   subsets: ['latin', 'latin-ext'],
   display: 'swap',
 });
@@ -22,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl">
-      <body className={`${inter.variable} font-sans h-screen overflow-hidden bg-background text-foreground flex flex-col`}>
+      <body className={`${inter.variable} ${geistMono.variable} font-sans h-screen overflow-hidden bg-background text-foreground flex flex-col`}>
         <Providers>
           {children}
         </Providers>

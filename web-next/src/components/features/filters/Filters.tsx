@@ -1,9 +1,11 @@
 'use client';
 
 import { useSearchFilters } from '@/src/hooks/useSearchFilters';
+import { EventSortableAccessor } from '@/src/types/event.types';
+import { SortDirection } from '@/src/types/api.types';
 
 export default function Filters() {
-    const { params, setCity, setDateRange, setPriceRange, resetAll } = useSearchFilters();
+    const { params, setPriceRange, resetAll, setSorting } = useSearchFilters();
 
     return (
         <div className="space-y-6">
@@ -19,93 +21,84 @@ export default function Filters() {
                 </button>
             </div>
 
-            {/* ── City ── */}
-            <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Miasto</label>
-                <select
-                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    value={params.city || 'Gdańsk'}
-                    onChange={(e) => setCity(e.target.value)}
-                >
-                    {['Gdańsk', 'Warszawa', 'Kraków', 'Wrocław', 'Poznań', 'Łódź', 'Gdynia', 'Sopot'].map(
-                        (city) => (
-                            <option key={city} value={city}>
-                                {city}
-                            </option>
-                        )
-                    )}
-                </select>
-            </div>
-
-            {/* ── Date Range ── */}
-            <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Data</label>
-                <div className="flex gap-2">
-                    <input
-                        type="date"
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        value={params.startDate || ''}
-                        onChange={(e) =>
-                            setDateRange(e.target.value || null, params.endDate)
-                        }
-                    />
-                    <input
-                        type="date"
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        value={params.endDate || ''}
-                        onChange={(e) =>
-                            setDateRange(params.startDate, e.target.value || null)
-                        }
-                    />
-                </div>
-            </div>
-
             {/* ── Price Range ── */}
             <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Cena (PLN)</label>
-                <div className="flex gap-2">
-                    <input
-                        type="number"
-                        placeholder="Od"
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        value={params.minPrice ?? ''}
-                        onChange={(e) => {
-                            const v = e.target.value ? parseInt(e.target.value) : null;
-                            setPriceRange(v, params.maxPrice);
-                        }}
-                        min={0}
-                    />
-                    <input
-                        type="number"
-                        placeholder="Do"
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        value={params.maxPrice ?? ''}
-                        onChange={(e) => {
-                            const v = e.target.value ? parseInt(e.target.value) : null;
-                            setPriceRange(params.minPrice, v);
-                        }}
-                        min={0}
-                    />
+                <label className="block text-sm font-semibold text-text-primary mb-3">
+                    Cena
+                </label>
+
+                {/* Quick price presets */}
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                    {[
+                        { label: 'Za darmo', min: 0, max: 0 },
+                        { label: 'Do 50 zł', min: null, max: 50 },
+                        { label: 'Do 100 zł', min: null, max: 100 },
+                        { label: 'Do 200 zł', min: null, max: 200 },
+                        { label: 'Dowolna cena', min: null, max: null }
+                    ].map((preset) => {
+                        const isActive =
+                            params.minPrice === preset.min && params.maxPrice === preset.max;
+                        return (
+                            <button
+                                key={preset.label}
+                                onClick={() => setPriceRange(preset.min, preset.max)}
+                                className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-all ${isActive
+                                    ? 'border-primary bg-primary-light text-primary'
+                                    : 'border-border text-text-secondary hover:bg-surface hover:text-text-primary'
+                                    }`}
+                                style={
+                                    isActive
+                                        ? {
+                                            borderColor: 'var(--primary)',
+                                            background: 'var(--primary-light)',
+                                            color: 'var(--primary)',
+                                        }
+                                        : undefined
+                                }
+                            >
+                                {preset.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* ── Quick Date Presets ── */}
             <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Szybki wybór</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="block text-sm font-semibold text-text-primary mb-3">
+                    Sortuj
+                </label>
+
+                {/* Quick price presets */}
+                <div className="flex flex-wrap gap-1.5 mt-3">
                     {[
-                        { label: 'Dziś', action: () => { const d = new Date().toISOString().split('T')[0]; setDateRange(d, d); } },
-                        { label: 'Ten weekend', action: () => { /* placeholder for date logic */ } },
-                        { label: 'Za darmo', action: () => setPriceRange(0, 0) },
-                    ].map((preset) => (
-                        <button
-                            key={preset.label}
-                            onClick={preset.action}
-                            className="px-3 py-1.5 rounded-full border border-border text-sm text-text-secondary hover:bg-surface hover:text-text-primary transition-all"
-                        >
-                            {preset.label}
-                        </button>
-                    ))}
+                        { label: 'Najbliższe daty', key: 'StartDate' as EventSortableAccessor, order: 'Ascending' as SortDirection },
+                        { label: 'Najtańsze', key: 'Price' as EventSortableAccessor, order: 'Ascending' as SortDirection },
+                        { label: 'Najnowsze', key: 'CreatedAt' as EventSortableAccessor, order: 'Descending' as SortDirection },
+                    ].map((preset) => {
+                        const isActive =
+                            params.sortKey === preset.key && params.order === preset.order;
+                        return (
+                            <button
+                                key={preset.label}
+                                onClick={() => setSorting(preset.key, preset.order)}
+                                className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-all ${isActive
+                                    ? 'border-primary bg-primary-light text-primary'
+                                    : 'border-border text-text-secondary hover:bg-surface hover:text-text-primary'
+                                    }`}
+                                style={
+                                    isActive
+                                        ? {
+                                            borderColor: 'var(--primary)',
+                                            background: 'var(--primary-light)',
+                                            color: 'var(--primary)',
+                                        }
+                                        : undefined
+                                }
+                            >
+                                {preset.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>
