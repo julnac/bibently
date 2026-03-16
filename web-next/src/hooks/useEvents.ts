@@ -1,14 +1,14 @@
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { eventService } from '../services/events.service';
 import { EventQueryParams } from '../types/event.params';
-import { EventEntity } from '../types/event.types';
+import { EventSummary } from '../types/event.types';
 import { ApiPaginationResponse } from '../types/api.types';
 
 export const useEvents = (filters: EventQueryParams) => {
   return useInfiniteQuery<
     ApiPaginationResponse,
     Error,
-    EventEntity[],
+    EventSummary[],
     [string, EventQueryParams],
     string | undefined
   >({
@@ -16,7 +16,7 @@ export const useEvents = (filters: EventQueryParams) => {
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
       eventService.getEvents({
         ...filters,
-        PageToken: pageParam,
+        pageToken: pageParam,
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage: ApiPaginationResponse) => {

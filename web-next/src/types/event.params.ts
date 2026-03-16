@@ -2,19 +2,19 @@ import { EventSortableAccessor } from './event.types';
 import { SortDirection } from './api.types';
 
 export interface EventQueryParams {
-  City?: string;
-  Name?: string;
-  StartDate?: string;
-  EndDate?: string;
-  MinPrice?: number;
-  MaxPrice?: number;
-  Category?: string;
-  Latitude?: number | string;
-  Longitude?: number | string;
-  RadiusKm?: number;
-  Keywords?: string[];
-  SortKey?: EventSortableAccessor;
-  Order?: SortDirection;
-  PageSize?: number | string;
-  PageToken?: string;
-}
+  city?: string;
+  name?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  keywords?: string[];
+  latitude?: number | string;
+  longitude?: number | string;
+  radiusKm?: number;
+  sortKey?: EventSortableAccessor;
+  order?: SortDirection;
+  pageSize?: number | string;
+  pageToken?: string;
+} 

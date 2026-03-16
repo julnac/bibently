@@ -1,17 +1,20 @@
+'use client';
+
 import { Suspense } from 'react';
 import NavBar from '@/src/components/features/navigation/NavBar';
 import CategoryBar from '@/src/components/features/filters/category/CategoryBar';
+import { usePathname } from 'next/navigation';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const isEventPage = pathname?.startsWith('/event/');
+
     return (
         <>
             <Suspense fallback={<NavBarSkeleton />}>
                 <NavBar />
             </Suspense>
-            <Suspense fallback={<CategoryBarSkeleton />}>
-                <CategoryBar />
-            </Suspense>
-            <main className="flex-1 relative overflow-hidden">
+            <main className={`flex-1 relative ${isEventPage ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`}>
                 {children}
             </main>
         </>
