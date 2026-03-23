@@ -50,6 +50,8 @@ export const useSearchFilters = () => {
     const setName = (name: string | null) => setParams({ name });
     const setSorting = (sortKey: EventSortableAccessor | null, order: SortDirection | null) =>
         setParams({ sortKey, order });
+    const setLocation = (latitude: number | null, longitude: number | null, radiusKm: number | null) =>
+        setParams({ latitude, longitude, radiusKm });
     const resetAll = () =>
         setParams({
             city: null,
@@ -75,6 +77,7 @@ export const useSearchFilters = () => {
         setPriceRange,
         setName,
         setSorting,
+        setLocation,
         resetAll,
     };
 };

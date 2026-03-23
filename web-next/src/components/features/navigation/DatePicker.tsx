@@ -15,6 +15,7 @@ import {
     endOfMonth,
     isToday,
 } from 'date-fns';
+import { useMediaQuery } from 'react-responsive';
 
 interface DatePickerProps {
     startDate: string | null;
@@ -40,6 +41,14 @@ export default function DatePickerPopover({
 
     const [range, setRange] = useState<DateRange | undefined>(initialRange);
     const [activeQuickPick, setActiveQuickPick] = useState<'today' | 'tomorrow' | 'weekend' | 'thisWeek' | 'thisMonth' | null>(null);
+
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    const isMobileQuery = useMediaQuery({ query: "(max-width: 768px)" });
+    const isMobile = isMounted ? isMobileQuery : false;
 
     // Sync active tile with the visually selected range dynamically
     useEffect(() => {
@@ -127,31 +136,31 @@ export default function DatePickerPopover({
             {/* Quick-select pills */}
             <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
                 <button
-                    className={`px-4 py-1.5 rounded-full text-xs font-mono transition-colors border ${activeQuickPick === 'today' ? activeButtonClass : inactiveButtonClass}`}
+                    className={`px-4 py-2 rounded-full text-xs transition-colors border ${activeQuickPick === 'today' ? activeButtonClass : inactiveButtonClass}`}
                     onClick={handleToday}
                 >
                     Today
                 </button>
                 <button
-                    className={`px-4 py-1.5 rounded-full text-xs font-mono transition-colors border ${activeQuickPick === 'tomorrow' ? activeButtonClass : inactiveButtonClass}`}
+                    className={`px-4 py-2 rounded-full text-xs transition-colors border ${activeQuickPick === 'tomorrow' ? activeButtonClass : inactiveButtonClass}`}
                     onClick={handleTomorrow}
                 >
                     Tomorrow
                 </button>
                 <button
-                    className={`px-4 py-1.5 rounded-full text-xs font-mono transition-colors border ${activeQuickPick === 'weekend' ? activeButtonClass : inactiveButtonClass}`}
+                    className={`px-4 py-2 rounded-full text-xs transition-colors border ${activeQuickPick === 'weekend' ? activeButtonClass : inactiveButtonClass}`}
                     onClick={handleWeekend}
                 >
                     Weekend
                 </button>
                 <button
-                    className={`px-4 py-1.5 rounded-full text-xs font-mono transition-colors border ${activeQuickPick === 'thisWeek' ? activeButtonClass : inactiveButtonClass}`}
+                    className={`px-4 py-2 rounded-full text-xs transition-colors border ${activeQuickPick === 'thisWeek' ? activeButtonClass : inactiveButtonClass}`}
                     onClick={handleThisWeek}
                 >
                     This week
                 </button>
                 <button
-                    className={`px-4 py-1.5 rounded-full text-xs font-mono transition-colors border ${activeQuickPick === 'thisMonth' ? activeButtonClass : inactiveButtonClass}`}
+                    className={`px-4 py-2 rounded-full text-xs transition-colors border ${activeQuickPick === 'thisMonth' ? activeButtonClass : inactiveButtonClass}`}
                     onClick={handleThisMonth}
                 >
                     This month
@@ -166,7 +175,7 @@ export default function DatePickerPopover({
                     onSelect={handleSelect}
                     locale={enUS}
                     weekStartsOn={1}
-                    numberOfMonths={2}
+                    numberOfMonths={isMobile ? 1 : 2}
                     showOutsideDays={false}
                     classNames={{
                         root: 'rdp-bibently',
@@ -181,10 +190,10 @@ export default function DatePickerPopover({
                         weeks: '',
                         week: 'flex w-full',
                         day: 'relative w-10 h-10 p-0 m-0 text-sm flex items-center justify-center cursor-pointer',
-                        day_button: 'w-10 h-10 rounded-lg hover:border hover:border-foreground flex items-center justify-center transition-all',
-                        selected: 'bg-primary text-white rounded-lg font-bold',
-                        range_start: 'bg-primary text-white rounded-l-lg rounded-r-[0] font-bold before:absolute before:inset-0 before:bg-primary/5 before:rounded-l-lg before:-z-10',
-                        range_end: 'bg-primary text-white rounded-r-lg rounded-l-[0] font-bold before:absolute before:inset-0 before:bg-primary/5 before:rounded-r-lg before:-z-10',
+                        day_button: 'w-10 h-10 rounded-full hover:border hover:border-foreground flex items-center justify-center transition-all',
+                        selected: 'bg-primary text-white rounded-full font-bold',
+                        range_start: 'bg-primary text-white rounded-l-full rounded-r-[0] font-bold before:absolute before:inset-0 before:bg-primary/5 before:rounded-l-full before:-z-10',
+                        range_end: 'bg-primary text-white rounded-r-full rounded-l-[0] font-bold before:absolute before:inset-0 before:bg-primary/5 before:rounded-r-full before:-z-10',
                         range_middle: 'bg-primary/50 text-white rounded-none',
                         today: 'font-bold underline underline-offset-4',
                         outside: 'text-text-muted',

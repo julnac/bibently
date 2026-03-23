@@ -28,13 +28,26 @@ export default function EventCard({
 
     return (
         <article
-            className={`flex items-center bg-surface rounded-[16px] gap-4 relative shadow-[0_4px_12px_rgba(0,0,0,0.05)] ${isHovered ? 'ring-1 ring-primary/20' : ''
-                }`}
+            className={`
+                flex flex-col sm:flex-row items-stretch sm:items-center
+                bg-surface rounded-[8px] gap-0 sm:gap-4 relative
+                shadow-[0_4px_12px_rgba(0,0,0,0.05)]
+                ${isHovered ? 'ring-1 ring-primary/20' : ''}
+            `}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            {/* ── Image Section (Left) ── */}
-            <Link href={`/event/${slug}`} className="shrink-0 relative w-[200px] h-[150px] rounded-l-[16px] overflow-hidden bg-surface-hover">
+            {/* ── Image Section ── */}
+            <Link
+                href={`/event/${slug}`}
+                className="
+                    shrink-0 relative
+                    w-full sm:w-[200px]
+                    h-[150px]
+                    rounded-t-[8px] sm:rounded-t-none sm:rounded-l-[8px]
+                    overflow-hidden bg-surface-hover
+                "
+            >
                 {event.imageUrl ? (
                     <Image
                         src={event.imageUrl}
@@ -50,11 +63,23 @@ export default function EventCard({
                 )}
             </Link>
 
-            {/* ── Content Section (Middle) ── */}
-            <div className="flex flex-col flex-1 h-[130px] justify-between min-w-0 pr-12">
+            {/* Icons block */}
+            <div className="absolute top-29 left-2 md:top-auto md:bottom-2 md:left-2 flex items-center gap-2">
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-sm bg-surface-hover/80 text-xs text-text-secondary">
+                    <Users size={12} />
+                    <span>{event.attendeeCount}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-surface-hover/80 text-xs text-text-secondary">
+                    {isOnline ? <Globe size={12} /> : <MapPin size={12} />}
+                    <span>{isOnline ? 'online' : 'on-site'}</span>
+                </div>
+            </div>
+
+            {/* ── Content Section ── */}
+            <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-0 sm:h-[130px] justify-between sm:pr-14">
                 <Link href={`/event/${slug}`}>
                     {/* Title */}
-                    <h3 className={`font-bold text-base line-clamp-1 mb-1 transition-colors ${isHovered ? "text-primary" : "text-text-primary"}`}>
+                    <h3 className={`font-bold text-base mb-1 transition-colors line-clamp-2 ${isHovered ? "text-primary" : "text-text-primary"}`}>
                         {event.name}
                     </h3>
 
@@ -67,32 +92,21 @@ export default function EventCard({
                     </div>
 
                     {/* Location */}
-                    <div className="text-sm font-medium text-text-secondary line-clamp-1 mb-3">
+                    <div className="text-sm font-medium text-text-secondary line-clamp-1">
                         {event.location?.name || event.location?.address?.city || 'No location set'}
                     </div>
                 </Link>
 
                 {/* Bottom Row */}
-                <div className="flex items-center justify-between w-full mt-auto">
-                    {/* Icons block */}
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono text-text-secondary">
-                            <Users size={12} />
-                            <span>{event.attendeeCount}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono text-text-secondary">
-                            {isOnline ? <Globe size={12} /> : <MapPin size={12} />}
-                            <span>{isOnline ? 'online' : 'on-site'}</span>
-                        </div>
-                    </div>
+                <div className="flex items-center justify-between w-full mt-2 sm:mt-auto">
 
                     {/* Keywords (Tags) */}
                     {event.keywords && event.keywords.length > 0 && (
-                        <div className="flex items-center gap-1.5 hidden sm:flex truncate">
+                        <div className="flex items-center gap-1.5 truncate">
                             {event.keywords.slice(0, 3).map((keyword) => (
                                 <span
                                     key={keyword}
-                                    className="px-2.5 py-1 rounded-md border border-border text-[10px] font-mono tracking-wide text-text-secondary bg-transparent"
+                                    className="px-2.5 py-1 rounded-sm text-xs font-semibold italic uppercase bg-surface-hover"
                                 >
                                     {keyword}
                                 </span>
@@ -103,9 +117,9 @@ export default function EventCard({
             </div>
 
             {/* ── Right Action Buttons ── */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2">
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2 sm:flex-col">
                 <button
-                    className="w-8 h-8 rounded-lg bg-text-secondary text-white flex items-center justify-center hover:bg-foreground transition-colors shadow-sm"
+                    className="w-8 h-8 rounded-full bg-white/80 sm:bg-transparent text-primary border border-primary/50 sm:border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
                     aria-label="Save bookmark"
                     onClick={(e) => {
                         e.preventDefault();
@@ -115,7 +129,7 @@ export default function EventCard({
                     <Heart size={14} className="fill-transparent" />
                 </button>
                 <button
-                    className="w-8 h-8 rounded-lg bg-text-secondary text-white flex items-center justify-center hover:bg-foreground transition-colors shadow-sm"
+                    className="w-8 h-8 rounded-full bg-white/80 sm:bg-transparent text-primary border border-primary/50 sm:border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
                     aria-label="Share"
                     onClick={(e) => {
                         e.preventDefault();

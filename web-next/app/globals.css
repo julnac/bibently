@@ -11,8 +11,8 @@
   --surface-hover: #F6F3EC;
   --border: #D2CFC8;
   --border-light: #F6F3EC;
-  --primary: #E75A35;
-  --primary-dark: #e75935cb;
+  --primary: #CA7037;
+  --primary-dark: #CA7037;
   --primary-light: rgb(236, 162, 143);
   --text-primary: #1C1C1C;
   --text-secondary: #595958;
@@ -46,15 +46,15 @@
   --color-text-muted: var(--text-muted);
 
   /* Mobile Frontend Match Variables */
-  --color-surface-primary: #FCFAF7;
-  --color-surface-secondary: #F6F3EC;
-  --color-surface-inverted: #1C1C1C;
-  --color-surface-elevated: #FCFAF7;
+  --color-surface-primary: var(--surface);
+  --color-surface-secondary: var(--surface-hover);
+  --color-surface-inverted: var(--foreground);
+  --color-surface-elevated: var(--surface);
 
-  --color-text-inverted: #FCFAF7;
+  --color-text-inverted: var(--foreground);
 
-  --color-brand-primary: #483CF8;
-  --color-brand-accent: #E75A35;
+  --color-brand-primary: var(--primary);
+  --color-brand-accent: var(--primary);
 
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
@@ -253,7 +253,7 @@ body {
   border-radius: 50%;
   background: white;
   border: 2px solid var(--border);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   pointer-events: auto;
   position: relative;
@@ -263,7 +263,7 @@ body {
 
 .dual-slider-input::-webkit-slider-thumb:hover {
   border-color: var(--text-secondary);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.14);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
 }
 
 .dual-slider-input::-moz-range-thumb {
@@ -272,7 +272,7 @@ body {
   border-radius: 50%;
   background: white;
   border: 2px solid var(--border);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   pointer-events: auto;
   position: relative;
@@ -281,7 +281,7 @@ body {
 
 .dual-slider-input::-moz-range-thumb:hover {
   border-color: var(--text-secondary);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.14);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
 }
 
 /* ── City Autocomplete Dropdown ── */
@@ -581,4 +581,43 @@ body {
 
 .event-popup a.leaflet-popup-close-button:hover {
   color: var(--primary);
+}
+
+/* ── Mobile Menu Slide-in Animation ── */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.25s ease-out;
+}
+
+/* ── Responsive Nav Height ── */
+@media (max-width: 767px) {
+  :root {
+    --nav-height: 60px;
+  }
+}
+
+/* ── Floating View Toggle Button Animation ── */
+@keyframes floatIn {
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.view-toggle-btn {
+  animation: floatIn 0.3s ease-out;
 }
