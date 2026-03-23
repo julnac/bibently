@@ -8,7 +8,7 @@ export const useEvents = (filters: EventQueryParams) => {
   return useInfiniteQuery<
     ApiPaginationResponse,
     Error,
-    EventSummary[],
+    { items: EventSummary[]; totalCount: number },
     [string, EventQueryParams],
     string | undefined
   >({
@@ -22,7 +22,10 @@ export const useEvents = (filters: EventQueryParams) => {
     getNextPageParam: (lastPage: ApiPaginationResponse) => {
       return lastPage.nextPageToken || undefined;
     },
-    select: (data: InfiniteData<ApiPaginationResponse, string | undefined>) =>
-      data.pages.flatMap((pageParam: ApiPaginationResponse) => pageParam.items || []),
+    select: (data: InfiniteData<ApiPaginationResponse, string | undefined>) => {
+      const items = data.pages.flatMap((pageParam: ApiPaginationResponse) => pageParam.items || []);
+      const totalCount = data.pages[0]?.totalCount ?? items.length;
+      return { items, totalCount };
+    },
   });
 };

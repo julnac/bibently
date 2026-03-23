@@ -20,6 +20,7 @@
     "react-day-picker": "^9.13.2",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0",
+    "react-responsive": "^10.0.1",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

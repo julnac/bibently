@@ -12,7 +12,7 @@ export default function CategoryBar() {
     const { params, setCategory } = useSearchFilters();
     const { data: categories, isLoading, error } = useCategories();
     const [isMounted, setIsMounted] = useState(false);
-    
+
     // Scrolling states
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -32,7 +32,7 @@ export default function CategoryBar() {
 
     useEffect(() => {
         if (!isMounted || isLoading) return;
-        
+
         checkScrollable();
         window.addEventListener('resize', checkScrollable);
         return () => window.removeEventListener('resize', checkScrollable);
@@ -82,15 +82,15 @@ export default function CategoryBar() {
     ];
 
     return (
-        <div className="w-full relative z-10 p-4">
+        <div className="w-full relative z-10 p-0">
             {/* Scroll Buttons wrapper to handle gradient overlays & positioning */}
             <div className="relative group flex items-center w-full">
-                
+
                 {/* Left Arrow */}
                 {canScrollLeft && (
-                    <button 
+                    <button
                         onClick={() => scroll('left')}
-                        className="absolute left-0 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md text-text-primary hover:bg-surface border border-border transition-all -translate-x-2"
+                        className="hidden md:flex absolute left-0 z-20 items-center justify-center w-8 h-8 rounded-full bg-white shadow-md text-text-primary hover:bg-surface border border-border transition-all -translate-x-2"
                         aria-label="Scroll left"
                     >
                         <ChevronLeft size={16} />
@@ -103,7 +103,7 @@ export default function CategoryBar() {
                 )}
 
                 {/* Scroll Container */}
-                <div 
+                <div
                     ref={scrollContainerRef}
                     onScroll={checkScrollable}
                     className="flex flex-1 items-center gap-2 overflow-x-auto no-scrollbar snap-x scroll-smooth mx-1"
@@ -132,9 +132,9 @@ export default function CategoryBar() {
 
                 {/* Right Arrow */}
                 {canScrollRight && (
-                    <button 
+                    <button
                         onClick={() => scroll('right')}
-                        className="absolute right-0 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md text-text-primary hover:bg-surface border border-border transition-all translate-x-3"
+                        className="hidden md:flex absolute right-0 z-20 items-center justify-center w-8 h-8 rounded-full bg-white shadow-md text-text-primary hover:bg-surface border border-border transition-all translate-x-3"
                         aria-label="Scroll right"
                     >
                         <ChevronRight size={16} />
